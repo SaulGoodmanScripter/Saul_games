@@ -1,0 +1,220 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Srixat and Spider Script | Legends of Speed",
+   LoadingTitle = "Загрузка Srixat and Spider Script...",
+   LoadingSubtitle = "by Spider Script",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "SrixatSpiderScript",
+      FileName = "Config"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+Rayfield:Notify({
+   Title = "Srixat and Spider Script загружен!",
+   Content = "Автофарм готов. Включи toggles для ферм. Создано: Spider Script",
+   Duration = 5,
+   Image = 4483362458
+})
+
+local Tab = Window:CreateTab("Автофарм", 4483362458)
+
+local Section = Tab:CreateSection("Основные функции")
+
+-- Переменные для ферм
+getgenv().AutoOrbs = false
+getgenv().AutoGems = false
+getgenv().AutoSteps = false
+getgenv().AutoRebirth = false
+getgenv().NoClip = false
+getgenv().Fly = false
+
+-- Тоггл для авто орбов
+local Toggle = Tab:CreateToggle({
+   Name = "Авто орбы (Orbs Farm)",
+   CurrentValue = false,
+   Flag = "AutoOrbsToggle",
+   Callback = function(Value)
+      getgenv().AutoOrbs = Value
+      if Value then
+         spawn(function()
+            while getgenv().AutoOrbs do
+               wait(0.1)
+               -- Сбор разных орбов
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Green Orb", "City")
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Purple Orb", "City")
+            end
+         end)
+      end
+   end,
+})
+
+-- Тоггл для авто гемов
+local Toggle = Tab:CreateToggle({
+   Name = "Авто гемы (Gems Farm)",
+   CurrentValue = false,
+   Flag = "AutoGemsToggle",
+   Callback = function(Value)
+      getgenv().AutoGems = Value
+      if Value then
+         spawn(function()
+            while getgenv().AutoGems do
+               wait(0.5)
+               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Gem", "City")
+            end
+         end)
+      end
+   end,
+})
+
+-- Тоггл для авто стэпс
+local Toggle = Tab:CreateToggle({
+   Name = "Авто стэпс (Steps Farm)",
+   CurrentValue = false,
+   Flag = "AutoStepsToggle",
+   Callback = function(Value)
+      getgenv().AutoSteps = Value
+      if Value then
+         spawn(function()
+            while getgenv().AutoSteps do
+               wait(1.5)
+               for i = 1, 500 do
+                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
+                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
+                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
+               end
+            end
+         end)
+      end
+   end,
+})
+
+-- Тоггл для авто перерождения
+local Toggle = Tab:CreateToggle({
+   Name = "Авто перерождение (Auto Rebirth)",
+   CurrentValue = false,
+   Flag = "AutoRebirthToggle",
+   Callback = function(Value)
+      getgenv().AutoRebirth = Value
+      if Value then
+         spawn(function()
+            while getgenv().AutoRebirth do
+               wait(1)  -- Пауза, чтобы не спамить
+               game:GetService("ReplicatedStorage").rEvents.rebirthEvent:FireServer()
+            end
+         end)
+      end
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Телепорт в City (для ферм)",
+   Callback = function()
+      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0) -- Координаты City, подкорректируй если нужно
+   end,
+})
+
+local Section2 = Tab:CreateSection("Дополнительно")
+
+-- Тоггл для No Clip
+local Toggle = Tab:CreateToggle({
+   Name = "No Clip (Проход сквозь стены)",
+   CurrentValue = false,
+   Flag = "NoClipToggle",
+   Callback = function(Value)
+      getgenv().NoClip = Value
+      if Value then
+         spawn(function()
+            local Player = game.Players.LocalPlayer
+            local Character = Player.Character or Player.CharacterAdded:Wait()
+            while getgenv().NoClip do
+               wait()
+               for _, v in pairs(Character:GetDescendants()) do
+                  if v:IsA("BasePart") and v.CanCollide then
+                     v.CanCollide = false
+                  end
+               end
+            end
+         end)
+      end
+   end,
+})
+
+-- Тоггл для Fly (с управлением WASD + Space/Ctrl)
+local Toggle = Tab:CreateToggle({
+   Name = "Fly (Полёт)",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+      getgenv().Fly = Value
+      if Value then
+         spawn(function()
+            local Player = game.Players.LocalPlayer
+            local Mouse = Player:GetMouse()
+            local FlySpeed = 50  -- Скорость полёта, можно изменить
+
+            local Keys = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
+            local UIS = game:GetService("UserInputService")
+
+            UIS.InputBegan:Connect(function(input)
+               if input.KeyCode == Enum.KeyCode.W then Keys.W = true end
+               if input.KeyCode == Enum.KeyCode.A then Keys.A = true end
+               if input.KeyCode == Enum.KeyCode.S then Keys.S = true end
+               if input.KeyCode == Enum.KeyCode.D then Keys.D = true end
+               if input.KeyCode == Enum.KeyCode.Space then Keys.Space = true end
+               if input.KeyCode == Enum.KeyCode.LeftControl then Keys.LeftControl = true end
+            end)
+
+            UIS.InputEnded:Connect(function(input)
+               if input.KeyCode == Enum.KeyCode.W then Keys.W = false end
+               if input.KeyCode == Enum.KeyCode.A then Keys.A = false end
+               if input.KeyCode == Enum.KeyCode.S then Keys.S = false end
+               if input.KeyCode == Enum.KeyCode.D then Keys.D = false end
+               if input.KeyCode == Enum.KeyCode.Space then Keys.Space = false end
+               if input.KeyCode == Enum.KeyCode.LeftControl then Keys.LeftControl = false end
+            end)
+
+            while getgenv().Fly do
+               wait()
+               local Character = Player.Character
+               if Character then
+                  local HRP = Character:WaitForChild("HumanoidRootPart")
+                  local Camera = workspace.CurrentCamera
+                  local Velocity = Vector3.new(0, 0, 0)
+
+                  if Keys.W then Velocity = Velocity + Camera.CFrame.LookVector end
+                  if Keys.S then Velocity = Velocity - Camera.CFrame.LookVector end
+                  if Keys.A then Velocity = Velocity - Camera.CFrame.RightVector end
+                  if Keys.D then Velocity = Velocity + Camera.CFrame.RightVector end
+                  if Keys.Space then Velocity = Velocity + Vector3.new(0, 1, 0) end
+                  if Keys.LeftControl then Velocity = Velocity - Vector3.new(0, 1, 0) end
+
+                  if Velocity.Magnitude > 0 then
+                     Velocity = Velocity.Unit * FlySpeed
+                  end
+
+                  HRP.Velocity = Velocity
+                  HRP.Anchored = (Velocity == Vector3.new(0,0,0))  -- Чтобы не падать
+               end
+            end
+         end)
+      end
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Выход (Destroy GUI)",
+   Callback = function()
+      Rayfield:Destroy()
+   end,
+})
