@@ -1,8 +1,8 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Srixat and Spider Script | Legends of Speed",
-   LoadingTitle = "Загрузка Srixat and Spider Script...",
+   Name = "Saul Hub | Legends of Speed",
+   LoadingTitle = "Загрузка скрипта ...",
    LoadingSubtitle = "by Spider Script",
    ConfigurationSaving = {
       Enabled = true,
@@ -18,8 +18,8 @@ local Window = Rayfield:CreateWindow({
 })
 
 Rayfield:Notify({
-   Title = "Srixat and Spider Script загружен!",
-   Content = "Автофарм готов. Включи toggles для ферм. Создано: Spider Script",
+   Title = "Скрипт загружен!",
+   Content = "Автофарм готов. Включи toggles для ферм. Создано: Saul Hub",
    Duration = 5,
    Image = 4483362458
 })
