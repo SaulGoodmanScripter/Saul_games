@@ -1,553 +1,833 @@
--- ==============================================
--- LEGENDS OF SPEED - SAUL HUB VERSION
--- Использует вашу собственную библиотеку UI
--- ==============================================
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-
-local LocalPlayer = Players.LocalPlayer
-
--- Загружаем вашу библиотеку
+-- Legends Of Speed - Saul Hub версия
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/SAUL_HUB/refs/heads/main/Library%20.lua"))()
-
--- Создаем главное окно
 local Window = Library:Window({
-    Title = "🎮 Saul Hub | Legends of Speed",
-    Desc = "Авто-фарм и функции для Legends of Speed",
-    Icon = "zap", -- Можно использовать ваши иконки
-    Theme = "Default", -- Или "NewYear" если хотите новогоднюю тему
+    Title = "Legends Of Speed",
+    Desc = "Legends Of Speed",
+    Icon = 92155476988079,
+    Theme = "NewYear",
     Config = {
-        Keybind = Enum.KeyCode.RightControl,
-        Size = UDim2.new(0, 500, 0, 400)
+        Keybind = Enum.KeyCode.LeftControl,
+        Size = UDim2.new(0, 550, 0, 350)
     },
     CloseUIButton = {
         Enabled = true,
-        Text = "Закрыть"
+        Text = "Close/open"
     }
 })
 
--- Глобальные переменные для ферм
-local AutoOrbs = false
-local AutoGems = false
-local AutoSteps = false
-local AutoRebirth = false
-local NoClip = false
-local FlyEnabled = false
-local FlySpeed = 50
+-- Функции уведомлений
+local function Notify(title, desc, time)
+    Window:Notify({
+        Title = title,
+        Desc = desc,
+        Time = time or 3
+    })
+end
 
--- Уведомление о загрузке
-Window:Notify({
-    Title = "✅ Загружено!",
-    Desc = "Saul Hub для Legends of Speed активирован!\nВключите нужные функции для фарма.",
-    Time = 5
-})
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
 
--- ==============================================
--- ВКЛАДКА АВТО-ФАРМ
--- ==============================================
-local FarmTab = Window:Tab({Title = "⚡ Авто-фарм", Icon = "zap"})
+-- Вкладки
+local main = Window:Tab({Title = "Main", Icon = "home"})
+local ss = Window:Tab({Title = "Auto Farm", Icon = "tractor"})
+local sss = Window:Tab({Title = "Teleport", Icon = "map-pin"})
+local race = Window:Tab({Title = "Race", Icon = "flag"})
+local egg = Window:Tab({Title = "Crystal", Icon = "gem"})
+local misc = Window:Tab({Title = "Misc", Icon = "settings"})
+local how = Window:Tab({Title = "Glitch Help", Icon = "help-circle"})
 
-FarmTab:Section({Title = "Основные функции фарма"})
-
--- Переменная для Auto Orbs
-local autoOrbsToggle = FarmTab:Toggle({
-    Title = "🔴 Авто сбор орбов",
-    Desc = "Автоматически собирает все цветные орбы",
-    Value = false,
-    Callback = function(value)
-        AutoOrbs = value
-        if value then
-            spawn(function()
-                while AutoOrbs do
-                    task.wait(0.1)
-                    -- Сбор всех типов орбов
-                    pcall(function()
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Green Orb", "City")
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Purple Orb", "City")
-                    end)
-                end
-            end)
-        end
+-- Anti AFK
+local antiAFK = true
+LocalPlayer.Idled:Connect(function()
+    if antiAFK then
+        pcall(function()
+            game:GetService("VirtualUser"):Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            wait(1)
+            game:GetService("VirtualUser"):Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        end)
     end
+end)
+
+-- Разделы
+main:Section({Title = "Main"})
+
+-- Time Label
+local timeLabelText = "[GameTime] : Loading..."
+local timeLabel = main:Label({
+    Title = "Game Time",
+    Desc = timeLabelText
 })
 
--- Переменная для Auto Gems
-local autoGemsToggle = FarmTab:Toggle({
-    Title = "💎 Авто сбор гемов",
-    Desc = "Автоматически собирает гемы",
-    Value = false,
-    Callback = function(value)
-        AutoGems = value
-        if value then
-            spawn(function()
-                while AutoGems do
-                    task.wait(0.5)
-                    pcall(function()
-                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Gem", "City")
-                    end)
-                end
-            end)
-        end
+spawn(function()
+    while task.wait() do
+        pcall(function()
+            local GameTime = math.floor(workspace.DistributedGameTime+0.5)
+            local Hour = math.floor(GameTime/(60^2))%24
+            local Minute = math.floor(GameTime/(60^1))%60
+            local Second = math.floor(GameTime/(60^0))%60
+            timeLabelText = "Hours: "..Hour.." Minutes: "..Minute.." Seconds: "..Second
+            timeLabel:SetDesc(timeLabelText)
+        end)
     end
+end)
+
+-- FPS Label
+local fpsLabelText = "[Fps] : Loading..."
+local fpsLabel = main:Label({
+    Title = "FPS",
+    Desc = fpsLabelText
 })
 
--- Переменная для Auto Steps
-local autoStepsToggle = FarmTab:Toggle({
-    Title = "👣 Авто сбор шагов",
-    Desc = "Быстрый сбор для увеличения шагов",
-    Value = false,
-    Callback = function(value)
-        AutoSteps = value
-        if value then
-            spawn(function()
-                while AutoSteps do
-                    task.wait(1.5)
-                    pcall(function()
-                        for i = 1, 100 do
-                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
-                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
-                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
-                        end
-                    end)
-                end
-            end)
-        end
+spawn(function()
+    while true do
+        wait(.1)
+        pcall(function()
+            local Fps = math.floor(workspace:GetRealPhysicsFPS())
+            fpsLabelText = "FPS: "..Fps
+            fpsLabel:SetDesc(fpsLabelText)
+        end)
     end
+end)
+
+-- Ping Label
+local pingLabelText = "[Ping] : Loading..."
+local pingLabel = main:Label({
+    Title = "Ping",
+    Desc = pingLabelText
 })
 
--- Переменная для Auto Rebirth
-local autoRebirthToggle = FarmTab:Toggle({
-    Title = "🔄 Авто перерождение",
-    Desc = "Автоматическое перерождение",
-    Value = false,
-    Callback = function(value)
-        AutoRebirth = value
-        if value then
-            spawn(function()
-                while AutoRebirth do
-                    task.wait(1)
-                    pcall(function()
-                        ReplicatedStorage.rEvents.rebirthEvent:FireServer()
-                    end)
-                end
-            end)
-        end
+spawn(function()
+    while true do
+        wait(.1)
+        pcall(function()
+            local Ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+            pingLabelText = "Ping: "..Ping
+            pingLabel:SetDesc(pingLabelText)
+        end)
     end
-})
+end)
 
-FarmTab:Button({
-    Title = "📍 Телепорт в City",
-    Desc = "Телепортироваться на стартовую позицию",
+-- Сохраняем позиции сундуков
+local oldGoldenChestPosition
+local oldEnchantedChestPosition
+local oldMagmaChestPosition
+local oldGroupRewardsPosition
+
+pcall(function()
+    oldGoldenChestPosition = workspace.goldenChest.circleInner.CFrame
+    oldEnchantedChestPosition = workspace.enchantedChest.circleInner.CFrame
+    oldMagmaChestPosition = workspace.magmaChest.circleInner.CFrame
+    oldGroupRewardsPosition = workspace.groupRewardsCircle.circleInner.CFrame
+end)
+
+-- Claim All Chests
+main:Button({
+    Title = "Claim All Chests",
+    Desc = "Забрать все сундуки",
     Callback = function()
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
-            Window:Notify({
-                Title = "📍 Телепортирован",
-                Desc = "Перенесен в City",
-                Time = 3
-            })
+        pcall(function()
+            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                Notify("Error", "Character not found!", 3)
+                return
+            end
+            
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            
+            if not oldGoldenChestPosition then
+                oldGoldenChestPosition = workspace.goldenChest.circleInner.CFrame
+            end
+            if not oldEnchantedChestPosition then
+                oldEnchantedChestPosition = workspace.enchantedChest.circleInner.CFrame
+            end
+            if not oldMagmaChestPosition then
+                oldMagmaChestPosition = workspace.magmaChest.circleInner.CFrame
+            end
+            if not oldGroupRewardsPosition then
+                oldGroupRewardsPosition = workspace.groupRewardsCircle.circleInner.CFrame
+            end
+            
+            workspace.goldenChest.circleInner.CFrame = hrp.CFrame
+            workspace.enchantedChest.circleInner.CFrame = hrp.CFrame
+            workspace.magmaChest.circleInner.CFrame = hrp.CFrame
+            workspace.groupRewardsCircle.circleInner.CFrame = hrp.CFrame
+            wait(0.5)
+            workspace.goldenChest.circleInner.CFrame = oldGoldenChestPosition
+            workspace.enchantedChest.circleInner.CFrame = oldEnchantedChestPosition
+            workspace.magmaChest.circleInner.CFrame = oldMagmaChestPosition
+            workspace.groupRewardsCircle.circleInner.CFrame = oldGroupRewardsPosition
+            
+            Notify("Success", "All chests claimed!", 2)
+        end)
+    end
+})
+
+-- Auto Rebirth
+main:Toggle({
+    Title = "Auto Rebirth",
+    Desc = "Авто-реборн",
+    Value = false,
+    Callback = function(state)
+        _G.Rebirth = state
+        while _G.Rebirth do
+            wait()
+            pcall(function()
+                ReplicatedStorage.rEvents.rebirthEvent:FireServer("rebirthRequest")
+            end)
         end
     end
 })
 
-FarmTab:Section({Title = "Настройки фарма"})
-
-local orbSpeedSlider = FarmTab:Slider({
-    Title = "⚡ Скорость фарма",
-    Desc = "Скорость сбора орбов",
-    Min = 1,
-    Max = 10,
-    Rounding = 0,
-    Value = 5,
-    Callback = function(val)
-        Window:Notify({
-            Title = "⚡ Настройка",
-            Desc = "Скорость установлена: " .. val .. "/10",
-            Time = 3
-        })
+-- NoClip
+RunService.Stepped:Connect(function()
+    if _G.NoClip then
+        pcall(function()
+            for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+        end)
     end
-})
+end)
 
--- ==============================================
--- ВКЛАДКА ПЕРЕМЕЩЕНИЕ
--- ==============================================
-local MoveTab = Window:Tab({Title = "🚀 Перемещение", Icon = "wind"})
-
-MoveTab:Section({Title = "Режимы перемещения"})
-
--- NoClip функция
-local noclipToggle = MoveTab:Toggle({
-    Title = "👻 NoClip",
+main:Toggle({
+    Title = "No Clip",
     Desc = "Ходить сквозь стены",
     Value = false,
     Callback = function(value)
-        NoClip = value
+        _G.NoClip = value
+    end
+})
+
+main:Button({
+    Title = "Disable Trading",
+    Desc = "Отключить торговлю",
+    Callback = function()
+        pcall(function()
+            ReplicatedStorage.rEvents.tradingEvent:FireServer("disableTrading")
+            Notify("Success", "Trading disabled", 2)
+        end)
+    end
+})
+
+main:Button({
+    Title = "Enable Trading",
+    Desc = "Включить торговлю",
+    Callback = function()
+        pcall(function()
+            ReplicatedStorage.rEvents.tradingEvent:FireServer("enableTrading")
+            Notify("Success", "Trading enabled", 2)
+        end)
+    end
+})
+
+-- Функция для списка игроков
+local function GetPlayerListWithDisplay()
+    local list = {}
+    local mapping = {}
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer then
+            local displayText = v.DisplayName .. " (@" .. v.Name .. ")"
+            table.insert(list, displayText)
+            mapping[displayText] = v.Name
+        end
+    end
+    return list, mapping
+end
+
+local PlayerList, PlayerMapping = GetPlayerListWithDisplay()
+local TpPlayer = nil
+
+local PlayerDropdown = main:Dropdown({
+    Title = "Select Player",
+    Desc = "Выберите игрока для телепорта",
+    Options = PlayerList,
+    Value = PlayerList[1] or "",
+    Callback = function(value)
+        TpPlayer = PlayerMapping[value]
+    end
+})
+
+-- Обновление списка игроков
+Players.PlayerAdded:Connect(function(plr)
+    task.wait(0.5)
+    PlayerList, PlayerMapping = GetPlayerListWithDisplay()
+    pcall(function()
+        PlayerDropdown:Refresh(PlayerList, PlayerList[1] or "")
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    task.wait(0.5)
+    PlayerList, PlayerMapping = GetPlayerListWithDisplay()
+    if TpPlayer == plr.Name then
+        TpPlayer = nil
+    end
+    pcall(function()
+        PlayerDropdown:Refresh(PlayerList, PlayerList[1] or "")
+    end)
+end)
+
+main:Button({
+    Title = "Refresh Player List",
+    Desc = "Обновить список игроков",
+    Callback = function()
+        PlayerList, PlayerMapping = GetPlayerListWithDisplay()
+        pcall(function()
+            PlayerDropdown:Refresh(PlayerList, PlayerList[1] or "")
+        end)
+        Notify("Success", "Player list refreshed!", 2)
+    end
+})
+
+main:Button({
+    Title = "Teleport To Player",
+    Desc = "Телепорт к игроку",
+    Callback = function()
+        if not TpPlayer then
+            Notify("Error", "Please select a player first!", 3)
+            return
+        end
         
-        if value then
-            spawn(function()
-                while NoClip do
-                    task.wait()
-                    local character = LocalPlayer.Character
-                    if character then
-                        for _, part in pairs(character:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                part.CanCollide = false
-                            end
-                        end
+        local targetPlayer = Players:FindFirstChild(TpPlayer)
+        if not targetPlayer then
+            Notify("Error", "Player not found! They may have left.", 3)
+            return
+        end
+        
+        if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            Notify("Error", "Target player's character not found!", 3)
+            return
+        end
+        
+        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            Notify("Error", "Your character not found!", 3)
+            return
+        end
+        
+        local success, err = pcall(function()
+            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 1)
+        end)
+        
+        if success then
+            Notify("Success", "Teleported to " .. targetPlayer.DisplayName, 2)
+        else
+            Notify("Error", "Teleport failed: " .. tostring(err), 3)
+        end
+    end
+})
+
+main:Slider({
+    Title = "Speed",
+    Desc = "Скорость передвижения",
+    Min = 0,
+    Max = 5000,
+    Value = 300,
+    Callback = function(v)
+        pcall(function()
+            LocalPlayer.Character.Humanoid.WalkSpeed = v
+        end)
+    end
+})
+
+main:Slider({
+    Title = "Jump",
+    Desc = "Сила прыжка",
+    Min = 0,
+    Max = 1000,
+    Value = 50,
+    Callback = function(v)
+        pcall(function()
+            LocalPlayer.Character.Humanoid.JumpPower = v
+        end)
+    end
+})
+
+-- Auto Farm Tab
+ss:Section({Title = "Auto Farm"})
+ss:Label({
+    Title = "Farm Setting",
+    Desc = "Настройки фарма"
+})
+
+local locate = "City"
+ss:Dropdown({
+    Title = "Select Location",
+    Desc = "Выберите локацию",
+    Options = {"City", "Snow City", "Magma City", "Legends Highway", "Space", "Desert"},
+    Value = "City",
+    Callback = function(value)
+        locate = value
+    end
+})
+
+local orbs = "Red Orb"
+ss:Dropdown({
+    Title = "Select Orbs",
+    Desc = "Выберите орбы",
+    Options = {"Red Orb", "Yellow Orb", "Gem"},
+    Value = "Red Orb",
+    Callback = function(value)
+        orbs = value
+    end
+})
+
+local setFarm = 20
+ss:Dropdown({
+    Title = "Select Mode",
+    Desc = "Выберите режим",
+    Options = {"Super Fast", "Fast", "Medium", "Slow"},
+    Value = "Medium",
+    Callback = function(value)
+        if value == "Super Fast" then
+            setFarm = 40
+        elseif value == "Fast" then
+            setFarm = 30
+        elseif value == "Medium" then
+            setFarm = 20
+        elseif value == "Slow" then
+            setFarm = 10
+        end
+    end
+})
+
+ss:Label({
+    Title = "Speed Values",
+    Desc = "Super Fast = 40\nFast = 30\nMedium = 20\nSlow = 10"
+})
+
+ss:Toggle({
+    Title = "Start Farm",
+    Desc = "Начать фарм орбов",
+    Value = false,
+    Callback = function(state)
+        _G.Farm = state
+        while _G.Farm do
+            wait()
+            pcall(function()
+                for i = 1, setFarm do
+                    ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", orbs, locate)
+                end
+            end)
+        end
+    end
+})
+
+ss:Toggle({
+    Title = "Hoops Farm",
+    Desc = "Фарм обручей",
+    Value = false,
+    Callback = function(state)
+        _G.Hoops = state
+        while _G.Hoops do
+            wait()
+            pcall(function()
+                for _, child in ipairs(workspace.Hoops:GetChildren()) do
+                    if child.Name == 'Hoop' then
+                        child.Transparency = 1
+                        child.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
                     end
                 end
             end)
-        else
-            -- Восстанавливаем коллизию
-            local character = LocalPlayer.Character
-            if character then
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = true
-                    end
-                end
+        end
+    end
+})
+
+-- Race Tab
+race:Section({Title = "Race"})
+
+ReplicatedStorage.raceInProgress.Changed:Connect(function(state)
+    if not getgenv().AutoRace then return end
+    if state then
+        pcall(function()
+            ReplicatedStorage.rEvents.raceEvent:FireServer('joinRace')
+            wait()
+            LocalPlayer.PlayerGui.gameGui.raceJoinLabel.Visible = false
+        end)
+    end
+end)
+
+ReplicatedStorage.raceStarted.Changed:Connect(function(state)
+    if not getgenv().AutoRace then return end
+    if state then
+        pcall(function()
+            for _, v in pairs(workspace.raceMaps:GetChildren()) do
+                local oldFinishPosition = v.finishPart.CFrame
+                v.finishPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                wait()
+                v.finishPart.CFrame = oldFinishPosition
+            end
+        end)
+    end
+end)
+
+race:Toggle({
+    Title = "Auto Finish Race",
+    Desc = "Автоматически завершать гонки",
+    Value = false,
+    Callback = function(state)
+        getgenv().AutoRace = state
+    end
+})
+
+-- Teleport Tab
+sss:Section({Title = "Teleports"})
+
+if game.PlaceId == 3101667897 then
+    sss:Button({
+        Title = "City",
+        Desc = "Телепорт в City",
+        Callback = function()
+            pcall(function()
+                LocalPlayer.Character:MoveTo(Vector3.new(-9687.1923828125, 59.072853088378906, 3096.58837890625))
+                Notify("Success", "Teleported to City", 2)
+            end)
+        end
+    })
+    
+    sss:Button({
+        Title = "Snow City",
+        Desc = "Телепорт в Snow City",
+        Callback = function()
+            pcall(function()
+                LocalPlayer.Character:MoveTo(Vector3.new(-9677.6640625, 59.072853088378906, 3783.736572265625))
+                Notify("Success", "Teleported to Snow City", 2)
+            end)
+        end
+    })
+    
+    sss:Button({
+        Title = "Magma City",
+        Desc = "Телепорт в Magma City",
+        Callback = function()
+            pcall(function()
+                LocalPlayer.Character:MoveTo(Vector3.new(-11053.3837890625, 217.0328369140625, 4896.10986328125))
+                Notify("Success", "Teleported to Magma City", 2)
+            end)
+        end
+    })
+    
+    sss:Button({
+        Title = "Legends Highway",
+        Desc = "Телепорт в Legends Highway",
+        Callback = function()
+            pcall(function()
+                LocalPlayer.Character:MoveTo(Vector3.new(-13097.8583984375, 217.0328369140625, 5904.84716796875))
+                Notify("Success", "Teleported to Legends Highway", 2)
+            end)
+        end
+    })
+    
+    sss:Button({
+        Title = "Space",
+        Desc = "Телепорт в Space",
+        Callback = function()
+            TeleportService:Teleport(3232996272, LocalPlayer)
+        end
+    })
+    
+    sss:Button({
+        Title = "Desert",
+        Desc = "Телепорт в Desert",
+        Callback = function()
+            TeleportService:Teleport(3276265788, LocalPlayer)
+        end
+    })
+elseif game.PlaceId == 3232996272 then
+    sss:Button({
+        Title = "City",
+        Desc = "Телепорт в City",
+        Callback = function()
+            TeleportService:Teleport(3101667897, LocalPlayer)
+        end
+    })
+    
+    sss:Button({
+        Title = "Desert",
+        Desc = "Телепорт в Desert",
+        Callback = function()
+            TeleportService:Teleport(3276265788, LocalPlayer)
+        end
+    })
+elseif game.PlaceId == 3276265788 then
+    sss:Button({
+        Title = "City",
+        Desc = "Телепорт в City",
+        Callback = function()
+            TeleportService:Teleport(3101667897, LocalPlayer)
+        end
+    })
+    
+    sss:Button({
+        Title = "Space",
+        Desc = "Телепорт в Space",
+        Callback = function()
+            TeleportService:Teleport(3232996272, LocalPlayer)
+        end
+    })
+end
+
+-- Crystal Tab
+egg:Section({Title = "Crystal"})
+
+local Crystal = {}
+pcall(function()
+    for _, v in pairs(workspace.mapCrystalsFolder:GetChildren()) do
+        table.insert(Crystal, v.Name)
+    end
+end)
+
+local function OpenCrystal(v)
+    pcall(function()
+        ReplicatedStorage.rEvents.openCrystalRemote:InvokeServer("openCrystal", v)
+    end)
+end
+
+local OPENEGG = Crystal[1] or ""
+
+egg:Dropdown({
+    Title = "Select Crystal",
+    Desc = "Выберите кристалл",
+    Options = Crystal,
+    Value = Crystal[1] or "",
+    Callback = function(value)
+        OPENEGG = value
+    end
+})
+
+egg:Toggle({
+    Title = "Open Crystal",
+    Desc = "Авто-открытие кристаллов",
+    Value = false,
+    Callback = function(state)
+        _G.Mm = state
+        while _G.Mm do
+            wait()
+            if OPENEGG and OPENEGG ~= "" then
+                OpenCrystal(OPENEGG)
             end
         end
     end
 })
 
--- Fly функция
-local flyToggle = MoveTab:Toggle({
-    Title = "🕊️ Fly",
-    Desc = "Режим полета (WASD + Space/LCtrl)",
-    Value = false,
-    Callback = function(value)
-        FlyEnabled = value
-        
-        if value then
-            spawn(function()
-                local keys = {
-                    W = false,
-                    A = false,
-                    S = false,
-                    D = false,
-                    Space = false,
-                    LeftControl = false
-                }
-                
-                -- Обработчики нажатий клавиш
-                local function inputBegan(input)
-                    if input.KeyCode == Enum.KeyCode.W then keys.W = true end
-                    if input.KeyCode == Enum.KeyCode.A then keys.A = true end
-                    if input.KeyCode == Enum.KeyCode.S then keys.S = true end
-                    if input.KeyCode == Enum.KeyCode.D then keys.D = true end
-                    if input.KeyCode == Enum.KeyCode.Space then keys.Space = true end
-                    if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = true end
+-- Auto sell loops
+spawn(function()
+    while wait() do
+        if _G.AutoSellAllTrails then
+            pcall(function()
+                for _, rankFolder in pairs(LocalPlayer.trailsFolder:GetChildren()) do
+                    local rankName = rankFolder.Name
+                    for _, item in pairs(LocalPlayer.trailsFolder[rankName]:GetChildren()) do
+                        ReplicatedStorage.rEvents.sellTrailEvent:FireServer("sellTrail", item)
+                    end
                 end
-                
-                local function inputEnded(input)
-                    if input.KeyCode == Enum.KeyCode.W then keys.W = false end
-                    if input.KeyCode == Enum.KeyCode.A then keys.A = false end
-                    if input.KeyCode == Enum.KeyCode.S then keys.S = false end
-                    if input.KeyCode == Enum.KeyCode.D then keys.D = false end
-                    if input.KeyCode == Enum.KeyCode.Space then keys.Space = false end
-                    if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = false end
-                end
-                
-                UserInputService.InputBegan:Connect(inputBegan)
-                UserInputService.InputEnded:Connect(inputEnded)
-                
-                while FlyEnabled do
-                    task.wait()
-                    local character = LocalPlayer.Character
-                    if character and character:FindFirstChild("HumanoidRootPart") then
-                        local hrp = character.HumanoidRootPart
-                        local camera = Workspace.CurrentCamera
-                        local velocity = Vector3.new(0, 0, 0)
-                        
-                        if keys.W then velocity = velocity + camera.CFrame.LookVector end
-                        if keys.S then velocity = velocity - camera.CFrame.LookVector end
-                        if keys.A then velocity = velocity - camera.CFrame.RightVector end
-                        if keys.D then velocity = velocity + camera.CFrame.RightVector end
-                        if keys.Space then velocity = velocity + Vector3.new(0, 1, 0) end
-                        if keys.LeftControl then velocity = velocity - Vector3.new(0, 1, 0) end
-                        
-                        if velocity.Magnitude > 0 then
-                            velocity = velocity.Unit * FlySpeed
-                        end
-                        
-                        hrp.Velocity = velocity
-                        if velocity == Vector3.new(0, 0, 0) then
-                            hrp.Anchored = true
-                        else
-                            hrp.Anchored = false
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.AutoSellAllPets then
+            pcall(function()
+                for _, rankFolder in pairs(LocalPlayer.petsFolder:GetChildren()) do
+                    local rankName = rankFolder.Name
+                    for _, item in pairs(LocalPlayer.petsFolder[rankName]:GetChildren()) do
+                        if item.Name ~= "Ultra Birdie" then
+                            ReplicatedStorage.rEvents.sellPetEvent:FireServer("sellPet", item)
                         end
                     end
                 end
-                
-                -- Очистка при отключении
-                local character = LocalPlayer.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    character.HumanoidRootPart.Anchored = false
-                    character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.BunnyFarm then
+            pcall(function()
+                for _, rankFolder in pairs(LocalPlayer.petsFolder:GetChildren()) do
+                    local rankName = rankFolder.Name
+                    for _, item in pairs(LocalPlayer.petsFolder[rankName]:GetChildren()) do
+                        if item.Name ~= "Ultimate Overdrive Bunny" then
+                            ReplicatedStorage.rEvents.sellPetEvent:FireServer("sellPet", item)
+                        end
+                    end
                 end
-                
-                UserInputService.InputBegan:Disconnect()
-                UserInputService.InputEnded:Disconnect()
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.AutoUnique then
+            pcall(function()
+                for _, rankFolder in pairs(LocalPlayer.petsFolder:GetChildren()) do
+                    local rankName = rankFolder.Name
+                    if rankName ~= "Unique" then
+                        for _, item in pairs(LocalPlayer.petsFolder[rankName]:GetChildren()) do
+                            ReplicatedStorage.rEvents.sellPetEvent:FireServer("sellPet", item)
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.OpenBirdieEgg then
+            OpenCrystal("Electro Crystal")
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.OpenVoidEgg then
+            OpenCrystal("Desert Crystal")
+        end
+    end
+end)
+
+spawn(function()
+    while wait() do
+        if _G.OpenLegendsEgg then
+            OpenCrystal("Electro Legends Crystal")
+        end
+    end
+end)
+
+egg:Toggle({
+    Title = "Auto Void Dragon [Desert]",
+    Desc = "Авто-фарм Void Dragon",
+    Value = false,
+    Callback = function(state)
+        _G.OpenVoidEgg = state
+        _G.AutoUnique = state
+        _G.AutoSellAllTrails = state
+    end
+})
+
+egg:Toggle({
+    Title = "Auto Ultra Birdie [Best Pet Desert]",
+    Desc = "Авто-фарм Ultra Birdie",
+    Value = false,
+    Callback = function(state)
+        _G.OpenBirdieEgg = state
+        _G.AutoSellAllPets = state
+        _G.AutoSellAllTrails = state
+    end
+})
+
+egg:Toggle({
+    Title = "Auto Ultimate Overdrive Bunny",
+    Desc = "Авто-фарм Overdrive Bunny",
+    Value = false,
+    Callback = function(state)
+        _G.BunnyFarm = state
+        _G.OpenLegendsEgg = state
+    end
+})
+
+egg:Toggle({
+    Title = "Auto Evolved All Pets",
+    Desc = "Авто-эволюция всех питомцев",
+    Value = false,
+    Callback = function(state)
+        _G.Evo = state
+        while _G.Evo do
+            wait()
+            pcall(function()
+                for _, rankFolder in pairs(LocalPlayer.petsFolder:GetChildren()) do
+                    for _, pet in pairs(rankFolder:GetChildren()) do
+                        ReplicatedStorage.rEvents.petEvolveEvent:FireServer("evolvePet", pet.Name)
+                    end
+                end
             end)
         end
     end
 })
 
-MoveTab:Slider({
-    Title = "📏 Скорость полета",
-    Desc = "Настройка скорости полета",
-    Min = 20,
-    Max = 200,
-    Rounding = 0,
-    Value = 50,
-    Callback = function(val)
-        FlySpeed = val
-        Window:Notify({
-            Title = "📏 Настройка",
-            Desc = "Скорость полета: " .. val,
-            Time = 3
-        })
+-- Misc Tab
+misc:Section({Title = "Misc"})
+
+misc:Toggle({
+    Title = "Hide Popups",
+    Desc = "Скрыть попапы",
+    Value = false,
+    Callback = function(state)
+        getgenv().HidePopups = state
+        pcall(function()
+            if not getgenv().HidePopups then
+                LocalPlayer.PlayerGui.orbGui.Enabled = true
+                LocalPlayer.PlayerGui.gameGui.trailsNotificationsFrame.Visible = true
+                return
+            end
+            LocalPlayer.PlayerGui.orbGui.Enabled = false
+            LocalPlayer.PlayerGui.gameGui.trailsNotificationsFrame.Visible = false
+        end)
     end
 })
 
 -- Infinite Jump
-local infJumpToggle = MoveTab:Toggle({
-    Title = "🏀 Infinite Jump",
+local InfiniteJumpEnabled = false
+misc:Toggle({
+    Title = "Inf Jump",
     Desc = "Бесконечные прыжки",
     Value = false,
-    Callback = function(value)
-        if value then
-            UserInputService.JumpRequest:Connect(function()
-                local character = LocalPlayer.Character
-                if character and character:FindFirstChild("Humanoid") then
-                    character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
-            end)
-        else
-            -- Нужно будет хранить connection для отключения
-        end
+    Callback = function(v)
+        InfiniteJumpEnabled = v
     end
 })
 
-MoveTab:Section({Title = "Утилиты"})
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled then
+        pcall(function()
+            LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):ChangeState("Jumping")
+        end)
+    end
+end)
 
-MoveTab:Button({
-    Title = "⚡ Супер скорость",
-    Desc = "Увеличить скорость ходьбы",
+misc:Button({
+    Title = "Rejoin",
+    Desc = "Перезайти в игру",
     Callback = function()
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid.WalkSpeed = 100
-            Window:Notify({
-                Title = "⚡ Установлено",
-                Desc = "Скорость ходьбы: 100",
-                Time = 3
-            })
-        end
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end
 })
 
-MoveTab:Button({
-    Title = "🔄 Сбросить скорость",
-    Desc = "Вернуть стандартную скорость",
+misc:Button({
+    Title = "Low Server Hop",
+    Desc = "Переход на сервер с малым пингом",
     Callback = function()
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid.WalkSpeed = 16
-            Window:Notify({
-                Title = "🔄 Сброшено",
-                Desc = "Скорость восстановлена",
-                Time = 3
-            })
-        end
+        pcall(function()
+            local module = loadstring(game:HttpGet"https://raw.githubusercontent.com/raw-scriptpastebin/FE/main/Server_Hop_Settings")()
+            module:Teleport(game.PlaceId)
+        end)
     end
 })
 
--- ==============================================
--- ВКЛАДКА ИНФОРМАЦИЯ
--- ==============================================
-local InfoTab = Window:Tab({Title = "📊 Информация", Icon = "info"})
-
-InfoTab:Section({Title = "Статистика игры"})
-
--- Функция для получения статистики (если есть)
-local function getGameStats()
-    -- Здесь можно добавить получение статистики из игры
-    return {
-        {"🎮 Игра", "Legends of Speed"},
-        {"👤 Игрок", LocalPlayer.Name},
-        {"💰 Монеты", "N/A"},
-        {"⚡ Скорость", "N/A"},
-        {"🏆 Уровень", "N/A"}
-    }
-end
-
--- Отображение статистики
-local stats = getGameStats()
-for _, stat in ipairs(stats) do
-    InfoTab:Label({
-        Title = stat[1],
-        Desc = stat[2]
-    })
-end
-
-InfoTab:Section({Title = "Состояние скрипта"})
-
-InfoTab:Label({
-    Title = "🟢 Статус скрипта",
-    Desc = "Saul Hub активен"
+-- Glitch Help Tab
+how:Section({Title = "Tutorial"})
+how:Label({
+    Title = "How to use the glitch:",
+    Desc = "1. Use Pet Level 1 No XP\n2. Turn on Yellow Orbs In Auto Farm Menu\n3. Don't Get About XP\n4. Don't Use Other Features Except Yellow Orbs\n5. Done"
 })
 
-InfoTab:Label({
-    Title = "⚡ Активные функции",
-    Desc = "Авто-фарм: " .. (AutoOrbs and "Вкл" or "Выкл") ..
-           " | Полет: " .. (FlyEnabled and "Вкл" or "Выкл")
+how:Section({Title = "Notes"})
+how:Label({
+    Title = "Important Notes:",
+    Desc = "> Make sure your Rebirth is Odd\n> The Power Pet Will Return If You Disconnect"
 })
 
--- ==============================================
--- ВКЛАДКА НАСТРОЙКИ
--- ==============================================
-local SettingsTab = Window:Tab({Title = "⚙️ Настройки", Icon = "settings"})
-
-SettingsTab:Section({Title = "Настройки интерфейса"})
-
-SettingsTab:Toggle({
-    Title = "🌙 Темная тема",
-    Desc = "Переключить темную/светлую тему",
-    Value = true,
-    Callback = function(value)
-        Window:Notify({
-            Title = "🎨 Тема",
-            Desc = value and "Темная тема включена" or "Светлая тема включена",
-            Time = 3
-        })
-    end
-})
-
-SettingsTab:Slider({
-    Title = "🔊 Громкость уведомлений",
-    Desc = "Громкость звуков уведомлений",
-    Min = 0,
-    Max = 100,
-    Rounding = 0,
-    Value = 50,
-    Callback = function(val)
-        -- Ваша логика звука
-    end
-})
-
-SettingsTab:Section({Title = "Управление"})
-
-SettingsTab:Button({
-    Title = "🔄 Перезагрузить скрипт",
-    Desc = "Перезагрузить интерфейс",
-    Callback = function()
-        Window:Notify({
-            Title = "🔄 Перезагрузка",
-            Desc = "Скрипт перезагружается...",
-            Time = 3
-        })
-        -- Здесь можно добавить перезагрузку скрипта
-    end
-})
-
-SettingsTab:Button({
-    Title = "🚪 Закрыть интерфейс",
-    Desc = "Скрыть интерфейс",
-    Callback = function()
-        Window:Destroy()
-    end
-})
-
-SettingsTab:Button({
-    Title = "📋 Копировать ID игры",
-    Desc = "Скопировать Place ID",
-    Callback = function()
-        setclipboard(tostring(game.PlaceId))
-        Window:Notify({
-            Title = "📋 Скопировано",
-            Desc = "ID игры скопирован",
-            Time = 3
-        })
-    end
-})
-
--- ==============================================
--- ЗАКЛЮЧИТЕЛЬНЫЕ ФУНКЦИИ
--- ==============================================
-
--- Функция безопасности
-local function safeFireServer(event, ...)
-    local success, result = pcall(function()
-        return event:FireServer(...)
-    end)
-    return success
-end
-
--- Авто-сохранение позиции при телепорте
-local lastPosition = nil
-MoveTab:Button({
-    Title = "📍 Сохранить позицию",
-    Desc = "Сохранить текущую позицию",
-    Callback = function()
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            lastPosition = character.HumanoidRootPart.CFrame
-            Window:Notify({
-                Title = "📍 Сохранено",
-                Desc = "Позиция сохранена",
-                Time = 3
-            })
-        end
-    end
-})
-
-MoveTab:Button({
-    Title = "↩️ Вернуться к позиции",
-    Desc = "Вернуться к сохраненной позиции",
-    Callback = function()
-        if lastPosition then
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = lastPosition
-                Window:Notify({
-                    Title = "↩️ Возврат",
-                    Desc = "Возвращено к сохраненной позиции",
-                    Time = 3
-                })
-            end
-        else
-            Window:Notify({
-                Title = "⚠️ Внимание",
-                Desc = "Сначала сохраните позицию",
-                Time = 3
-            })
-        end
-    end
-})
-
--- Финальное уведомление
-task.wait(2)
-Window:Notify({
-    Title = "🎮 Наслаждайтесь игрой!",
-    Desc = "Saul Hub для Legends of Speed готов к работе!\nИспользуйте функции для эффективного фарма.",
-    Time = 5
-})
-
-print("======================================")
-print("🎮 Saul Hub | Legends of Speed")
-print("⚡ Версия: 1.0")
-print("👤 Игрок: " .. LocalPlayer.Name)
-print("🎮 Place ID: " .. game.PlaceId)
-print("✅ Интерфейс успешно загружен!")
-print("======================================")
+Notify("Legends Of Speed", "Script loaded successfully!", 5)
+print("Legends Of Speed - Saul Hub version loaded!")
                
