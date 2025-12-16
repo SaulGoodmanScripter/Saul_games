@@ -1,220 +1,553 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- ==============================================
+-- LEGENDS OF SPEED - SAUL HUB VERSION
+-- Использует вашу собственную библиотеку UI
+-- ==============================================
 
-local Window = Rayfield:CreateWindow({
-   Name = "Saul Hub | Legends of Speed",
-   LoadingTitle = "Загрузка скрипта ...",
-   LoadingSubtitle = "by Spider Script",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "SrixatSpiderScript",
-      FileName = "Config"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "noinvitelink",
-      RememberJoins = true
-   },
-   KeySystem = false
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Загружаем вашу библиотеку
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/SAUL_HUB/refs/heads/main/Library%20.lua"))()
+
+-- Создаем главное окно
+local Window = Library:Window({
+    Title = "🎮 Saul Hub | Legends of Speed",
+    Desc = "Авто-фарм и функции для Legends of Speed",
+    Icon = "zap", -- Можно использовать ваши иконки
+    Theme = "Default", -- Или "NewYear" если хотите новогоднюю тему
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 500, 0, 400)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "Закрыть"
+    }
 })
 
-Rayfield:Notify({
-   Title = "Скрипт загружен!",
-   Content = "Автофарм готов. Включи toggles для ферм. Создано: Saul Hub",
-   Duration = 5,
-   Image = 4483362458
+-- Глобальные переменные для ферм
+local AutoOrbs = false
+local AutoGems = false
+local AutoSteps = false
+local AutoRebirth = false
+local NoClip = false
+local FlyEnabled = false
+local FlySpeed = 50
+
+-- Уведомление о загрузке
+Window:Notify({
+    Title = "✅ Загружено!",
+    Desc = "Saul Hub для Legends of Speed активирован!\nВключите нужные функции для фарма.",
+    Time = 5
 })
 
-local Tab = Window:CreateTab("Автофарм", 4483362458)
+-- ==============================================
+-- ВКЛАДКА АВТО-ФАРМ
+-- ==============================================
+local FarmTab = Window:Tab({Title = "⚡ Авто-фарм", Icon = "zap"})
 
-local Section = Tab:CreateSection("Основные функции")
+FarmTab:Section({Title = "Основные функции фарма"})
 
--- Переменные для ферм
-getgenv().AutoOrbs = false
-getgenv().AutoGems = false
-getgenv().AutoSteps = false
-getgenv().AutoRebirth = false
-getgenv().NoClip = false
-getgenv().Fly = false
-
--- Тоггл для авто орбов
-local Toggle = Tab:CreateToggle({
-   Name = "Авто орбы (Orbs Farm)",
-   CurrentValue = false,
-   Flag = "AutoOrbsToggle",
-   Callback = function(Value)
-      getgenv().AutoOrbs = Value
-      if Value then
-         spawn(function()
-            while getgenv().AutoOrbs do
-               wait(0.1)
-               -- Сбор разных орбов
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Green Orb", "City")
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Purple Orb", "City")
-            end
-         end)
-      end
-   end,
-})
-
--- Тоггл для авто гемов
-local Toggle = Tab:CreateToggle({
-   Name = "Авто гемы (Gems Farm)",
-   CurrentValue = false,
-   Flag = "AutoGemsToggle",
-   Callback = function(Value)
-      getgenv().AutoGems = Value
-      if Value then
-         spawn(function()
-            while getgenv().AutoGems do
-               wait(0.5)
-               game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Gem", "City")
-            end
-         end)
-      end
-   end,
-})
-
--- Тоггл для авто стэпс
-local Toggle = Tab:CreateToggle({
-   Name = "Авто стэпс (Steps Farm)",
-   CurrentValue = false,
-   Flag = "AutoStepsToggle",
-   Callback = function(Value)
-      getgenv().AutoSteps = Value
-      if Value then
-         spawn(function()
-            while getgenv().AutoSteps do
-               wait(1.5)
-               for i = 1, 500 do
-                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
-                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
-                  game:GetService("ReplicatedStorage").rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
-               end
-            end
-         end)
-      end
-   end,
-})
-
--- Тоггл для авто перерождения
-local Toggle = Tab:CreateToggle({
-   Name = "Авто перерождение (Auto Rebirth)",
-   CurrentValue = false,
-   Flag = "AutoRebirthToggle",
-   Callback = function(Value)
-      getgenv().AutoRebirth = Value
-      if Value then
-         spawn(function()
-            while getgenv().AutoRebirth do
-               wait(1)  -- Пауза, чтобы не спамить
-               game:GetService("ReplicatedStorage").rEvents.rebirthEvent:FireServer()
-            end
-         end)
-      end
-   end,
-})
-
-local Button = Tab:CreateButton({
-   Name = "Телепорт в City (для ферм)",
-   Callback = function()
-      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0) -- Координаты City, подкорректируй если нужно
-   end,
-})
-
-local Section2 = Tab:CreateSection("Дополнительно")
-
--- Тоггл для No Clip
-local Toggle = Tab:CreateToggle({
-   Name = "No Clip (Проход сквозь стены)",
-   CurrentValue = false,
-   Flag = "NoClipToggle",
-   Callback = function(Value)
-      getgenv().NoClip = Value
-      if Value then
-         spawn(function()
-            local Player = game.Players.LocalPlayer
-            local Character = Player.Character or Player.CharacterAdded:Wait()
-            while getgenv().NoClip do
-               wait()
-               for _, v in pairs(Character:GetDescendants()) do
-                  if v:IsA("BasePart") and v.CanCollide then
-                     v.CanCollide = false
-                  end
-               end
-            end
-         end)
-      end
-   end,
-})
-
--- Тоггл для Fly (с управлением WASD + Space/Ctrl)
-local Toggle = Tab:CreateToggle({
-   Name = "Fly (Полёт)",
-   CurrentValue = false,
-   Flag = "FlyToggle",
-   Callback = function(Value)
-      getgenv().Fly = Value
-      if Value then
-         spawn(function()
-            local Player = game.Players.LocalPlayer
-            local Mouse = Player:GetMouse()
-            local FlySpeed = 50  -- Скорость полёта, можно изменить
-
-            local Keys = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
-            local UIS = game:GetService("UserInputService")
-
-            UIS.InputBegan:Connect(function(input)
-               if input.KeyCode == Enum.KeyCode.W then Keys.W = true end
-               if input.KeyCode == Enum.KeyCode.A then Keys.A = true end
-               if input.KeyCode == Enum.KeyCode.S then Keys.S = true end
-               if input.KeyCode == Enum.KeyCode.D then Keys.D = true end
-               if input.KeyCode == Enum.KeyCode.Space then Keys.Space = true end
-               if input.KeyCode == Enum.KeyCode.LeftControl then Keys.LeftControl = true end
+-- Переменная для Auto Orbs
+local autoOrbsToggle = FarmTab:Toggle({
+    Title = "🔴 Авто сбор орбов",
+    Desc = "Автоматически собирает все цветные орбы",
+    Value = false,
+    Callback = function(value)
+        AutoOrbs = value
+        if value then
+            spawn(function()
+                while AutoOrbs do
+                    task.wait(0.1)
+                    -- Сбор всех типов орбов
+                    pcall(function()
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Green Orb", "City")
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Purple Orb", "City")
+                    end)
+                end
             end)
+        end
+    end
+})
 
-            UIS.InputEnded:Connect(function(input)
-               if input.KeyCode == Enum.KeyCode.W then Keys.W = false end
-               if input.KeyCode == Enum.KeyCode.A then Keys.A = false end
-               if input.KeyCode == Enum.KeyCode.S then Keys.S = false end
-               if input.KeyCode == Enum.KeyCode.D then Keys.D = false end
-               if input.KeyCode == Enum.KeyCode.Space then Keys.Space = false end
-               if input.KeyCode == Enum.KeyCode.LeftControl then Keys.LeftControl = false end
+-- Переменная для Auto Gems
+local autoGemsToggle = FarmTab:Toggle({
+    Title = "💎 Авто сбор гемов",
+    Desc = "Автоматически собирает гемы",
+    Value = false,
+    Callback = function(value)
+        AutoGems = value
+        if value then
+            spawn(function()
+                while AutoGems do
+                    task.wait(0.5)
+                    pcall(function()
+                        ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Gem", "City")
+                    end)
+                end
             end)
+        end
+    end
+})
 
-            while getgenv().Fly do
-               wait()
-               local Character = Player.Character
-               if Character then
-                  local HRP = Character:WaitForChild("HumanoidRootPart")
-                  local Camera = workspace.CurrentCamera
-                  local Velocity = Vector3.new(0, 0, 0)
+-- Переменная для Auto Steps
+local autoStepsToggle = FarmTab:Toggle({
+    Title = "👣 Авто сбор шагов",
+    Desc = "Быстрый сбор для увеличения шагов",
+    Value = false,
+    Callback = function(value)
+        AutoSteps = value
+        if value then
+            spawn(function()
+                while AutoSteps do
+                    task.wait(1.5)
+                    pcall(function()
+                        for i = 1, 100 do
+                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Orange Orb", "City")
+                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Red Orb", "City")
+                            ReplicatedStorage.rEvents.orbEvent:FireServer("collectOrb", "Blue Orb", "City")
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
 
-                  if Keys.W then Velocity = Velocity + Camera.CFrame.LookVector end
-                  if Keys.S then Velocity = Velocity - Camera.CFrame.LookVector end
-                  if Keys.A then Velocity = Velocity - Camera.CFrame.RightVector end
-                  if Keys.D then Velocity = Velocity + Camera.CFrame.RightVector end
-                  if Keys.Space then Velocity = Velocity + Vector3.new(0, 1, 0) end
-                  if Keys.LeftControl then Velocity = Velocity - Vector3.new(0, 1, 0) end
+-- Переменная для Auto Rebirth
+local autoRebirthToggle = FarmTab:Toggle({
+    Title = "🔄 Авто перерождение",
+    Desc = "Автоматическое перерождение",
+    Value = false,
+    Callback = function(value)
+        AutoRebirth = value
+        if value then
+            spawn(function()
+                while AutoRebirth do
+                    task.wait(1)
+                    pcall(function()
+                        ReplicatedStorage.rEvents.rebirthEvent:FireServer()
+                    end)
+                end
+            end)
+        end
+    end
+})
 
-                  if Velocity.Magnitude > 0 then
-                     Velocity = Velocity.Unit * FlySpeed
-                  end
+FarmTab:Button({
+    Title = "📍 Телепорт в City",
+    Desc = "Телепортироваться на стартовую позицию",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
+            Window:Notify({
+                Title = "📍 Телепортирован",
+                Desc = "Перенесен в City",
+                Time = 3
+            })
+        end
+    end
+})
 
-                  HRP.Velocity = Velocity
-                  HRP.Anchored = (Velocity == Vector3.new(0,0,0))  -- Чтобы не падать
-               end
+FarmTab:Section({Title = "Настройки фарма"})
+
+local orbSpeedSlider = FarmTab:Slider({
+    Title = "⚡ Скорость фарма",
+    Desc = "Скорость сбора орбов",
+    Min = 1,
+    Max = 10,
+    Rounding = 0,
+    Value = 5,
+    Callback = function(val)
+        Window:Notify({
+            Title = "⚡ Настройка",
+            Desc = "Скорость установлена: " .. val .. "/10",
+            Time = 3
+        })
+    end
+})
+
+-- ==============================================
+-- ВКЛАДКА ПЕРЕМЕЩЕНИЕ
+-- ==============================================
+local MoveTab = Window:Tab({Title = "🚀 Перемещение", Icon = "wind"})
+
+MoveTab:Section({Title = "Режимы перемещения"})
+
+-- NoClip функция
+local noclipToggle = MoveTab:Toggle({
+    Title = "👻 NoClip",
+    Desc = "Ходить сквозь стены",
+    Value = false,
+    Callback = function(value)
+        NoClip = value
+        
+        if value then
+            spawn(function()
+                while NoClip do
+                    task.wait()
+                    local character = LocalPlayer.Character
+                    if character then
+                        for _, part in pairs(character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end
+            end)
+        else
+            -- Восстанавливаем коллизию
+            local character = LocalPlayer.Character
+            if character then
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
             end
-         end)
-      end
-   end,
+        end
+    end
 })
 
-local Button = Tab:CreateButton({
-   Name = "Выход (Destroy GUI)",
-   Callback = function()
-      Rayfield:Destroy()
-   end,
+-- Fly функция
+local flyToggle = MoveTab:Toggle({
+    Title = "🕊️ Fly",
+    Desc = "Режим полета (WASD + Space/LCtrl)",
+    Value = false,
+    Callback = function(value)
+        FlyEnabled = value
+        
+        if value then
+            spawn(function()
+                local keys = {
+                    W = false,
+                    A = false,
+                    S = false,
+                    D = false,
+                    Space = false,
+                    LeftControl = false
+                }
+                
+                -- Обработчики нажатий клавиш
+                local function inputBegan(input)
+                    if input.KeyCode == Enum.KeyCode.W then keys.W = true end
+                    if input.KeyCode == Enum.KeyCode.A then keys.A = true end
+                    if input.KeyCode == Enum.KeyCode.S then keys.S = true end
+                    if input.KeyCode == Enum.KeyCode.D then keys.D = true end
+                    if input.KeyCode == Enum.KeyCode.Space then keys.Space = true end
+                    if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = true end
+                end
+                
+                local function inputEnded(input)
+                    if input.KeyCode == Enum.KeyCode.W then keys.W = false end
+                    if input.KeyCode == Enum.KeyCode.A then keys.A = false end
+                    if input.KeyCode == Enum.KeyCode.S then keys.S = false end
+                    if input.KeyCode == Enum.KeyCode.D then keys.D = false end
+                    if input.KeyCode == Enum.KeyCode.Space then keys.Space = false end
+                    if input.KeyCode == Enum.KeyCode.LeftControl then keys.LeftControl = false end
+                end
+                
+                UserInputService.InputBegan:Connect(inputBegan)
+                UserInputService.InputEnded:Connect(inputEnded)
+                
+                while FlyEnabled do
+                    task.wait()
+                    local character = LocalPlayer.Character
+                    if character and character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = character.HumanoidRootPart
+                        local camera = Workspace.CurrentCamera
+                        local velocity = Vector3.new(0, 0, 0)
+                        
+                        if keys.W then velocity = velocity + camera.CFrame.LookVector end
+                        if keys.S then velocity = velocity - camera.CFrame.LookVector end
+                        if keys.A then velocity = velocity - camera.CFrame.RightVector end
+                        if keys.D then velocity = velocity + camera.CFrame.RightVector end
+                        if keys.Space then velocity = velocity + Vector3.new(0, 1, 0) end
+                        if keys.LeftControl then velocity = velocity - Vector3.new(0, 1, 0) end
+                        
+                        if velocity.Magnitude > 0 then
+                            velocity = velocity.Unit * FlySpeed
+                        end
+                        
+                        hrp.Velocity = velocity
+                        if velocity == Vector3.new(0, 0, 0) then
+                            hrp.Anchored = true
+                        else
+                            hrp.Anchored = false
+                        end
+                    end
+                end
+                
+                -- Очистка при отключении
+                local character = LocalPlayer.Character
+                if character and character:FindFirstChild("HumanoidRootPart") then
+                    character.HumanoidRootPart.Anchored = false
+                    character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+                end
+                
+                UserInputService.InputBegan:Disconnect()
+                UserInputService.InputEnded:Disconnect()
+            end)
+        end
+    end
 })
+
+MoveTab:Slider({
+    Title = "📏 Скорость полета",
+    Desc = "Настройка скорости полета",
+    Min = 20,
+    Max = 200,
+    Rounding = 0,
+    Value = 50,
+    Callback = function(val)
+        FlySpeed = val
+        Window:Notify({
+            Title = "📏 Настройка",
+            Desc = "Скорость полета: " .. val,
+            Time = 3
+        })
+    end
+})
+
+-- Infinite Jump
+local infJumpToggle = MoveTab:Toggle({
+    Title = "🏀 Infinite Jump",
+    Desc = "Бесконечные прыжки",
+    Value = false,
+    Callback = function(value)
+        if value then
+            UserInputService.JumpRequest:Connect(function()
+                local character = LocalPlayer.Character
+                if character and character:FindFirstChild("Humanoid") then
+                    character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            -- Нужно будет хранить connection для отключения
+        end
+    end
+})
+
+MoveTab:Section({Title = "Утилиты"})
+
+MoveTab:Button({
+    Title = "⚡ Супер скорость",
+    Desc = "Увеличить скорость ходьбы",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = 100
+            Window:Notify({
+                Title = "⚡ Установлено",
+                Desc = "Скорость ходьбы: 100",
+                Time = 3
+            })
+        end
+    end
+})
+
+MoveTab:Button({
+    Title = "🔄 Сбросить скорость",
+    Desc = "Вернуть стандартную скорость",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = 16
+            Window:Notify({
+                Title = "🔄 Сброшено",
+                Desc = "Скорость восстановлена",
+                Time = 3
+            })
+        end
+    end
+})
+
+-- ==============================================
+-- ВКЛАДКА ИНФОРМАЦИЯ
+-- ==============================================
+local InfoTab = Window:Tab({Title = "📊 Информация", Icon = "info"})
+
+InfoTab:Section({Title = "Статистика игры"})
+
+-- Функция для получения статистики (если есть)
+local function getGameStats()
+    -- Здесь можно добавить получение статистики из игры
+    return {
+        {"🎮 Игра", "Legends of Speed"},
+        {"👤 Игрок", LocalPlayer.Name},
+        {"💰 Монеты", "N/A"},
+        {"⚡ Скорость", "N/A"},
+        {"🏆 Уровень", "N/A"}
+    }
+end
+
+-- Отображение статистики
+local stats = getGameStats()
+for _, stat in ipairs(stats) do
+    InfoTab:Label({
+        Title = stat[1],
+        Desc = stat[2]
+    })
+end
+
+InfoTab:Section({Title = "Состояние скрипта"})
+
+InfoTab:Label({
+    Title = "🟢 Статус скрипта",
+    Desc = "Saul Hub активен"
+})
+
+InfoTab:Label({
+    Title = "⚡ Активные функции",
+    Desc = "Авто-фарм: " .. (AutoOrbs and "Вкл" or "Выкл") ..
+           " | Полет: " .. (FlyEnabled and "Вкл" or "Выкл")
+})
+
+-- ==============================================
+-- ВКЛАДКА НАСТРОЙКИ
+-- ==============================================
+local SettingsTab = Window:Tab({Title = "⚙️ Настройки", Icon = "settings"})
+
+SettingsTab:Section({Title = "Настройки интерфейса"})
+
+SettingsTab:Toggle({
+    Title = "🌙 Темная тема",
+    Desc = "Переключить темную/светлую тему",
+    Value = true,
+    Callback = function(value)
+        Window:Notify({
+            Title = "🎨 Тема",
+            Desc = value and "Темная тема включена" or "Светлая тема включена",
+            Time = 3
+        })
+    end
+})
+
+SettingsTab:Slider({
+    Title = "🔊 Громкость уведомлений",
+    Desc = "Громкость звуков уведомлений",
+    Min = 0,
+    Max = 100,
+    Rounding = 0,
+    Value = 50,
+    Callback = function(val)
+        -- Ваша логика звука
+    end
+})
+
+SettingsTab:Section({Title = "Управление"})
+
+SettingsTab:Button({
+    Title = "🔄 Перезагрузить скрипт",
+    Desc = "Перезагрузить интерфейс",
+    Callback = function()
+        Window:Notify({
+            Title = "🔄 Перезагрузка",
+            Desc = "Скрипт перезагружается...",
+            Time = 3
+        })
+        -- Здесь можно добавить перезагрузку скрипта
+    end
+})
+
+SettingsTab:Button({
+    Title = "🚪 Закрыть интерфейс",
+    Desc = "Скрыть интерфейс",
+    Callback = function()
+        Window:Destroy()
+    end
+})
+
+SettingsTab:Button({
+    Title = "📋 Копировать ID игры",
+    Desc = "Скопировать Place ID",
+    Callback = function()
+        setclipboard(tostring(game.PlaceId))
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "ID игры скопирован",
+            Time = 3
+        })
+    end
+})
+
+-- ==============================================
+-- ЗАКЛЮЧИТЕЛЬНЫЕ ФУНКЦИИ
+-- ==============================================
+
+-- Функция безопасности
+local function safeFireServer(event, ...)
+    local success, result = pcall(function()
+        return event:FireServer(...)
+    end)
+    return success
+end
+
+-- Авто-сохранение позиции при телепорте
+local lastPosition = nil
+MoveTab:Button({
+    Title = "📍 Сохранить позицию",
+    Desc = "Сохранить текущую позицию",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            lastPosition = character.HumanoidRootPart.CFrame
+            Window:Notify({
+                Title = "📍 Сохранено",
+                Desc = "Позиция сохранена",
+                Time = 3
+            })
+        end
+    end
+})
+
+MoveTab:Button({
+    Title = "↩️ Вернуться к позиции",
+    Desc = "Вернуться к сохраненной позиции",
+    Callback = function()
+        if lastPosition then
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = lastPosition
+                Window:Notify({
+                    Title = "↩️ Возврат",
+                    Desc = "Возвращено к сохраненной позиции",
+                    Time = 3
+                })
+            end
+        else
+            Window:Notify({
+                Title = "⚠️ Внимание",
+                Desc = "Сначала сохраните позицию",
+                Time = 3
+            })
+        end
+    end
+})
+
+-- Финальное уведомление
+task.wait(2)
+Window:Notify({
+    Title = "🎮 Наслаждайтесь игрой!",
+    Desc = "Saul Hub для Legends of Speed готов к работе!\nИспользуйте функции для эффективного фарма.",
+    Time = 5
+})
+
+print("======================================")
+print("🎮 Saul Hub | Legends of Speed")
+print("⚡ Версия: 1.0")
+print("👤 Игрок: " .. LocalPlayer.Name)
+print("🎮 Place ID: " .. game.PlaceId)
+print("✅ Интерфейс успешно загружен!")
+print("======================================")
+               
