@@ -1,5 +1,5 @@
 -- Legends Of Speed - Saul Hub версия
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/SAUL_HUB/refs/heads/main/Library%20.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
 local Window = Library:Window({
     Title = "Legends Of Speed",
     Desc = "Legends Of Speed",
