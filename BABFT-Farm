@@ -1,0 +1,577 @@
+-- Saul Hub версия для Build A Boat For Treasure
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Загружаем библиотеку Saul Hub
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/SAUL_HUB/refs/heads/main/Library%20.lua"))()
+
+-- Создаем окно
+local Window = Library:Window({
+    Title = "⚡ BABFT Script",
+    Desc = "Build A Boat For Treasure Автофарм",
+    Icon = 12600726809,
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 550, 0, 400)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "Закрыть"
+    }
+})
+
+-- Вкладка Auto Farm
+local Tab1 = Window:Tab({Title = "🏃 Auto Farm", Icon = "zap"})
+
+Tab1:Section({Title = "⚡ Основные функции"})
+
+local autoFarmRunning = false
+local spawnedPlatforms = {}
+local positions = {
+    Vector3.new(-62, 67, 1363),
+    Vector3.new(-65, 58, 2135),
+    Vector3.new(-52, 73, 2903),
+    Vector3.new(-58, 76, 3672),
+    Vector3.new(-60, 80, 4445),
+    Vector3.new(-55, 73, 5217),
+    Vector3.new(-53, 64, 5984),
+    Vector3.new(-63, 63, 6751),
+    Vector3.new(-50, 28, 7527),
+    Vector3.new(-104, 37, 8298),
+    Vector3.new(-57, -358, 9491)
+}
+
+local function removePlatforms()
+    for _, p in ipairs(spawnedPlatforms) do
+        if p and p.Parent then
+            p:Destroy()
+        end
+    end
+    table.clear(spawnedPlatforms)
+    
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Part") and obj.Name == "TeleportPlatform" then
+            obj:Destroy()
+        end
+    end
+end
+
+local function platformExistsAt(pos)
+    for _, part in ipairs(spawnedPlatforms) do
+        if part and part.Parent and (part.Position - Vector3.new(pos.X, pos.Y - 3, pos.Z)).Magnitude < 0.1 then
+            return true
+        end
+    end
+    return false
+end
+
+local function placePlatform(pos)
+    if platformExistsAt(pos) then return end
+    local platform = Instance.new("Part")
+    platform.Size = Vector3.new(10, 1, 10)
+    platform.Position = Vector3.new(pos.X, pos.Y - 3, pos.Z)
+    platform.Anchored = true
+    platform.CanCollide = true
+    platform.Material = Enum.Material.SmoothPlastic
+    platform.BrickColor = BrickColor.new("Bright yellow")
+    platform.Name = "TeleportPlatform"
+    platform.Parent = workspace
+    table.insert(spawnedPlatforms, platform)
+    
+    local surfaceGui = Instance.new("SurfaceGui")
+    surfaceGui.Face = Enum.NormalId.Top
+    surfaceGui.Adornee = platform
+    surfaceGui.Parent = platform
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = "Made By D3IVI5420"
+    textLabel.TextColor3 = Color3.new(0, 0, 0)
+    textLabel.TextScaled = true
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.Parent = surfaceGui
+end
+
+local autoFarmStatus = Tab1:Label({
+    Title = "Статус",
+    Desc = "⏹️ Автофарм остановлен"
+})
+
+Tab1:Button({
+    Title = "🚀 Старт/Стоп",
+    Desc = "Запуск/остановка автофарма",
+    Callback = function()
+        autoFarmRunning = not autoFarmRunning
+        
+        if autoFarmRunning then
+            autoFarmStatus:SetDesc("▶️ Автофарм запущен")
+            
+            task.spawn(function()
+                while autoFarmRunning do
+                    local character = LocalPlayer.Character
+                    if not character then
+                        LocalPlayer.CharacterAdded:Wait()
+                        continue
+                    end
+                    
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then
+                        task.wait(0.5)
+                        continue
+                    end
+                    
+                    for _, pos in ipairs(positions) do
+                        if not autoFarmRunning then break end
+                        placePlatform(pos)
+                        hrp.CFrame = CFrame.new(pos)
+                        task.wait(2)
+                    end
+                    
+                    task.wait(16)
+                end
+                
+                removePlatforms()
+                autoFarmStatus:SetDesc("⏹️ Автофарм остановлен")
+            end)
+        else
+            removePlatforms()
+            autoFarmStatus:SetDesc("⏹️ Автофарм остановлен")
+        end
+    end
+})
+
+Tab1:Button({
+    Title = "🛡️ Anti-AFK",
+    Desc = "Защита от кика за AFK",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ArgetnarYT/scripts/main/AntiAfk2.lua"))()
+    end
+})
+
+Tab1:Button({
+    Title = "🧹 Очистить платформы",
+    Desc = "Удалить все созданные платформы",
+    Callback = function()
+        removePlatforms()
+        Window:Notify({
+            Title = "🧹 Очищено",
+            Desc = "Все платформы удалены",
+            Time = 3
+        })
+    end
+})
+
+Tab1:Section({Title = "🔧 Настройки"})
+
+local teleportDelay = 2
+Tab1:Slider({
+    Title = "Задержка телепорта",
+    Desc = "Время между телепортами",
+    Min = 1,
+    Max = 5,
+    Rounding = 0,
+    Value = 2,
+    Callback = function(val)
+        teleportDelay = val
+    end
+})
+
+-- Вкладка Auto Quest
+local Tab2 = Window:Tab({Title = "🎯 Auto Quest", Icon = "target"})
+
+Tab2:Section({Title = "📋 Квесты"})
+
+Tab2:Button({
+    Title = "☁️ Квест облако",
+    Desc = "Выполнить квест с облаком",
+    Callback = function()
+        local function startQuest()
+            local args = {1}
+            workspace:WaitForChild("QuestMakerEvent"):FireServer(unpack(args))
+        end
+        
+        local function touchCloud()
+            local brickColorToCloud = {
+                ["Magenta"] = function() return workspace["MagentaZone"].Quest.Cloud.Part1 end,
+                ["Really red"] = function() return workspace["Really redZone"].Quest.Cloud.Part1 end,
+                ["Camo"] = function() return workspace["CamoZone"].Quest.Cloud.Part1 end,
+                ["Really blue"] = function() return workspace["Really blueZone"].Quest.Cloud.Part1 end,
+                ["Black"] = function() return workspace["BlackZone"].Quest.Cloud.Part1 end,
+                ["White"] = function() return workspace["WhiteZone"].Quest.Cloud.Part1 end,
+                ["New Yeller"] = function() return workspace["New YellerZone"].Quest.Cloud.Part1 end
+            }
+            
+            local brickColorName = tostring(LocalPlayer.Team.TeamColor)
+            local cloudGetter = brickColorToCloud[brickColorName]
+            
+            if cloudGetter then
+                local cloudPart = cloudGetter()
+                if cloudPart and cloudPart:FindFirstChild("TouchInterest") then
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, cloudPart, 0)
+                    task.wait(0.1)
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, cloudPart, 1)
+                end
+            end
+        end
+        
+        startQuest()
+        task.wait(0.5)
+        touchCloud()
+    end
+})
+
+Tab2:Button({
+    Title = "🎯 Квест мишень",
+    Desc = "Выполнить квест с мишенью",
+    Callback = function()
+        local function startQuest()
+            local args = {2}
+            workspace:WaitForChild("QuestMakerEvent"):FireServer(unpack(args))
+        end
+        
+        local function touchTarget()
+            local brickColorToTarget = {
+                ["Magenta"] = function() return workspace["MagentaZone"].Quest.Target.Part end,
+                ["Really red"] = function() return workspace["Really redZone"].Quest.Target.Part end,
+                ["Camo"] = function() return workspace["CamoZone"].Quest.Target.Part end,
+                ["Really blue"] = function() return workspace["Really blueZone"].Quest.Target.Part end,
+                ["Black"] = function() return workspace["BlackZone"].Quest.Target.Part end,
+                ["White"] = function() return workspace["WhiteZone"].Quest.Target.Part end,
+                ["New Yeller"] = function() return workspace["New YellerZone"].Quest.Target.Part end
+            }
+            
+            local brickColorName = tostring(LocalPlayer.Team.TeamColor)
+            local targetGetter = brickColorToTarget[brickColorName]
+            
+            if targetGetter then
+                local targetPart = targetGetter()
+                if targetPart and targetPart:FindFirstChild("TouchInterest") then
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, targetPart, 0)
+                    task.wait(0.1)
+                    firetouchinterest(LocalPlayer.Character.HumanoidRootPart, targetPart, 1)
+                end
+            end
+        end
+        
+        startQuest()
+        task.wait(0.5)
+        touchTarget()
+    end
+})
+
+Tab2:Button({
+    Title = "🛑 Квест рампа",
+    Desc = "Выполнить квест с рампой",
+    Callback = function()
+        local args = {3}
+        workspace:WaitForChild("QuestMakerEvent"):FireServer(unpack(args))
+    end
+})
+
+Tab2:Button({
+    Title = "🧈 Квест масло",
+    Desc = "Выполнить квест с маслом",
+    Callback = function()
+        task.spawn(function()
+            local args = {4}
+            workspace:WaitForChild("QuestMakerEvent"):FireServer(unpack(args))
+            
+            task.wait(0.5)
+            
+            local function getButterClickDetector()
+                local brickColorToZone = {
+                    ["New Yeller"] = "New YellerZone",
+                    ["Really red"] = "Really redZone",
+                    ["Magenta"] = "MagentaZone",
+                    ["Camo"] = "CamoZone",
+                    ["Really blue"] = "Really blueZone",
+                    ["White"] = "WhiteZone",
+                    ["Black"] = "BlackZone"
+                }
+                
+                local zoneName = brickColorToZone[tostring(LocalPlayer.Team.TeamColor)]
+                if zoneName then
+                    local zone = workspace:FindFirstChild(zoneName)
+                    if zone then
+                        local quest = zone:FindFirstChild("Quest")
+                        if quest then
+                            local butter = quest:FindFirstChild("Butter")
+                            if butter then
+                                local ppart = butter:FindFirstChild("PPart")
+                                if ppart then
+                                    return ppart:FindFirstChildOfClass("ClickDetector")
+                                end
+                            end
+                        end
+                    end
+                end
+                return nil
+            end
+            
+            local failCount = 0
+            while failCount < 3 do
+                local cd = getButterClickDetector()
+                if cd then
+                    fireclickdetector(cd)
+                    failCount = 0
+                else
+                    failCount = failCount + 1
+                end
+                task.wait(0.5)
+            end
+        end)
+    end
+})
+
+Tab2:Button({
+    Title = "⚽ Футбол квест",
+    Desc = "Выполнить квест футбол",
+    Callback = function()
+        task.spawn(function()
+            local teamBlocks = {
+                green = {
+                    zone = "CamoZone",
+                    placeCF = CFrame.new(49, 6.1, -27),
+                    targetCF = CFrame.new(-355.9657, -11.89999, 222.89316, 0, 0, 1, 0, 1, 0, -1, 0, 0)
+                },
+                magenta = {
+                    zone = "MagentaZone",
+                    placeCF = CFrame.new(49, 6.1, -27),
+                    targetCF = CFrame.new(248.83432, -11.89999, 710.69318, 0, 0, -1, 0, 1, 0, 1, 0, 0)
+                },
+                blue = {
+                    zone = "Really blueZone",
+                    placeCF = CFrame.new(49, 6.1, -27),
+                    targetCF = CFrame.new(248.83432, -11.89999, 352.49319, 0, 0, -1, 0, 1, 0, 1, 0, 0)
+                },
+                red = {
+                    zone = "Really redZone",
+                    placeCF = CFrame.new(49, 6.1, -28),
+                    targetCF = CFrame.new(249.83432, -11.89999, -5.70679, 0, 0, -1, 0, 1, 0, 1, 0, 0)
+                },
+                black = {
+                    zone = "BlackZone",
+                    placeCF = CFrame.new(48.99999, 6.1, -27),
+                    targetCF = CFrame.new(-355.9657, -11.89999, -136.10684, 0, 0, 1, 0, 1, 0, -1, 0, 0)
+                },
+                white = {
+                    zone = "WhiteZone",
+                    placeCF = CFrame.new(49, 6.1, -27),
+                    targetCF = CFrame.new(9.43431, -11.89999, -372.50687, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+                },
+                yellow = {
+                    zone = "New YellerZone",
+                    placeCF = CFrame.new(49, 6.1, -27),
+                    targetCF = CFrame.new(-355.9657, -11.89999, 580.89319, 0, 0, 1, 0, 1, 0, -1, 0, 0)
+                }
+            }
+            
+            local function findTeamData(teamName)
+                if not teamName then return nil end
+                local nameLower = string.lower(teamName)
+                for keyword, data in pairs(teamBlocks) do
+                    if string.find(nameLower, keyword) then
+                        return data
+                    end
+                end
+                return nil
+            end
+            
+            local teamName = LocalPlayer.Team and LocalPlayer.Team.Name or nil
+            local data = findTeamData(teamName)
+            
+            if data then
+                workspace:WaitForChild("QuestMakerEvent"):FireServer(8)
+                
+                local tool = LocalPlayer.Character:FindFirstChild("BuildingTool") or LocalPlayer.Backpack:FindFirstChild("BuildingTool")
+                while not tool do
+                    LocalPlayer.CharacterAdded:Wait()
+                    tool = LocalPlayer.Character:FindFirstChild("BuildingTool") or LocalPlayer.Backpack:FindFirstChild("BuildingTool")
+                end
+                
+                local args = {
+                    "WoodBlock",
+                    9,
+                    workspace:WaitForChild(data.zone),
+                    data.placeCF,
+                    true,
+                    data.targetCF,
+                    false
+                }
+                tool:WaitForChild("RF"):InvokeServer(unpack(args))
+                
+                workspace:WaitForChild("ClearAllPlayersBoatParts"):FireServer()
+            end
+        end)
+    end
+})
+
+-- Вкладка Auto Buy
+local Tab3 = Window:Tab({Title = "🛒 Auto Buy", Icon = "shopping-cart"})
+
+Tab3:Section({Title = "📦 Сундуки"})
+
+local chests = {
+    {name = "Обычный", item = "Common Chest", delay = 3},
+    {name = "Необычный", item = "Uncommon Chest", delay = 3},
+    {name = "Редкий", item = "Rare Chest", delay = 3},
+    {name = "Эпический", item = "Epic Chest", delay = 3},
+    {name = "Легендарный", item = "Legendary Chest", delay = 3}
+}
+
+for _, chest in ipairs(chests) do
+    local running = false
+    local button = Tab3:Button({
+        Title = "📦 " .. chest.name .. " сундук",
+        Desc = "Автопокупка " .. chest.name .. " сундука",
+        Callback = function()
+            running = not running
+            
+            if running then
+                button:SetTitle("🛑 Остановить " .. chest.name)
+                
+                task.spawn(function()
+                    while running do
+                        local args = {chest.item, 1}
+                        pcall(function()
+                            workspace:WaitForChild("ItemBoughtFromShop"):InvokeServer(unpack(args))
+                        end)
+                        task.wait(chest.delay)
+                    end
+                    
+                    button:SetTitle("📦 " .. chest.name .. " сундук")
+                end)
+            else
+                button:SetTitle("📦 " .. chest.name .. " сундук")
+            end
+        end
+    })
+end
+
+Tab3:Section({Title = "🧱 Блоки"})
+
+Tab3:Button({
+    Title = "🔄 Пластиковый блок",
+    Desc = "Автопокупка пластиковых блоков",
+    Callback = function()
+        local running = true
+        
+        task.spawn(function()
+            while running do
+                local args = {"PlasticBlock", 1}
+                pcall(function()
+                    workspace:WaitForChild("ItemBoughtFromShop"):InvokeServer(unpack(args))
+                end)
+                task.wait(3)
+            end
+        end)
+    end
+})
+
+-- Вкладка Misc
+local Tab4 = Window:Tab({Title = "🔧 Misc", Icon = "settings"})
+
+Tab4:Section({Title = "⚡ Скрипты"})
+
+Tab4:Button({
+    Title = "🚀 Infinity Yield",
+    Desc = "Загрузить Infinity Yield",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    end
+})
+
+Tab4:Button({
+    Title = "➕ 200 слотов",
+    Desc = "Разблокировать 200 слотов",
+    Callback = function()
+        _G.Amount = 200
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/catblox1346/StensUIReMake/main/BabftRelated/SlotSpawner"))()
+    end
+})
+
+Tab4:Button({
+    Title = "⭐ Gamepasses",
+    Desc = "Разблокировать геймпассы",
+    Callback = function()
+        Window:Notify({
+            Title = "ℹ️ Информация",
+            Desc = "Функция в разработке",
+            Time = 3
+        })
+    end
+})
+
+Tab4:Section({Title = "🔧 Утилиты"})
+
+Tab4:Button({
+    Title = "🎯 ESP игроков",
+    Desc = "Показать всех игроков",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/SaulHub.Megascript/main/especially%20player%20"))()
+    end
+})
+
+Tab4:Button({
+    Title = "👻 Невидимость",
+    Desc = "Стать невидимым",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastebin.com/raw/3Rnd9rHf"))()
+    end
+})
+
+-- Вкладка Home/Информация
+local Tab5 = Window:Tab({Title = "🏠 Главная", Icon = "home"})
+
+Tab5:Section({Title = "📊 Информация"})
+
+Tab5:Label({
+    Title = "👤 Игрок",
+    Desc = LocalPlayer.Name
+})
+
+Tab5:Label({
+    Title = "🎮 ID игры",
+    Desc = tostring(game.PlaceId)
+})
+
+Tab5:Label({
+    Title = "⚡ Статус",
+    Desc = "🟢 Script активен"
+})
+
+Tab5:Section({Title = "👑 Разработчик"})
+
+Tab5:Label({
+    Title = "Создатель",
+    Desc = "Made by @TheSaulScripter"
+})
+
+Tab5:Button({
+    Title = "❌ Закрыть GUI",
+    Desc = "Закрыть интерфейс",
+    Callback = function()
+        Window:Close()
+    end
+})
+
+Tab5:Button({
+    Title = "🔄 Перезапустить скрипт",
+    Desc = "Перезагрузить интерфейс",
+    Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end
+})
+
+-- Уведомление при запуске
+Window:Notify({
+    Title = "⚡ BABFT Script загружен",
+    Desc = "Добро пожаловать, " .. LocalPlayer.Name .. "!",
+    Time = 5
+})
