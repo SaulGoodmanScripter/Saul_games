@@ -1,5 +1,20 @@
--- Visit ui.xan.bar for the Xan UI Library, for other scripts visit xan.bar
+-- Подключение Saul Library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
+
+-- First create the Window
+local Window = Library:Window({
+    Title = "Lost Front",
+    Desc = "ESP & Aimbot",
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.Insert,
+        Size = UDim2.new(0, 480, 0, 420)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "HIDE/SHOW"
+    }
+})
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -52,9 +67,6 @@ local Cache = {
 }
 
 local Connections = {}
-local FOVCircle = nil
-local TargetCircle = nil
-local Window = nil -- Объявим глобально
 
 local function GetRoot(char)
     return char and char:FindFirstChild("HumanoidRootPart")
@@ -502,6 +514,9 @@ end
 
 local Aimbot = {}
 
+local FOVCircle = nil
+local TargetCircle = nil
+
 local function CreateFOVCircle()
     if FOVCircle then return end
     
@@ -531,8 +546,13 @@ local function CreateFOVCircle()
         TargetCircle.Radius = 20
     end)
     
-    -- Убрали Window:Notify() так как Window еще не создан
-    print("[Lost Front] FOV Circle created")
+    if success and FOVCircle then
+        Window:Notify({
+            Title = "FOV",
+            Desc = "Circle created!",
+            Time = 2
+        })
+    end
 end
 
 function Aimbot.UpdateFOV()
@@ -750,10 +770,8 @@ local function Cleanup()
     end
     Cache.ESP = {}
     
-    pcall(function() 
-        if FOVCircle then FOVCircle:Remove() end
-        if TargetCircle then TargetCircle:Remove() end
-    end)
+    pcall(function() if FOVCircle then FOVCircle:Remove() end end)
+    pcall(function() if TargetCircle then TargetCircle:Remove() end end)
     
     Radar.Destroy()
 end
@@ -775,117 +793,84 @@ local function Unload()
     
     Cleanup()
     
-    pcall(function()
-        local cam = Workspace.CurrentCamera
-        if cam then
-            cam.CameraType = Enum.CameraType.Custom
-        end
-    end)
-    
-    if Window then
-        Window:Notify({
-            Title = "Unloaded",
-            Desc = "Lost Front script removed",
-            Time = 2
-        })
-    end
-end
-
--- Теперь создаем Window после всех определений функций
-CreateFOVCircle()
-Aimbot.UpdateFOV()
-Radar.Create()
-
-Connections.Render = RunService.RenderStepped:Connect(MainLoop)
-
--- Создание окна
-Window = Library:Window({
-    Title = "Lost Front",
-    Desc = "ESP & Aimbot",
-    Icon = "zap",
-    Theme = "Dark",
-    Config = {
-        Size = IsMobile and UDim2.new(0, 420, 0, 500) or UDim2.new(0, 480, 0, 420),
-        Keybind = Enum.KeyCode.Insert
-    }
-})
-
-if IsMobile then
     Window:Notify({
-        Title = "Lost Front",
-        Desc = "Mobile mode activated",
+        Title = "Unloaded",
+        Desc = "Lost Front script removed",
         Time = 2
     })
 end
 
--- Таб Aimbot
+CreateFOVCircle()
+Aimbot.UpdateFOV()
+
+Radar.Create()
+
+Connections.Render = RunService.RenderStepped:Connect(MainLoop)
+
+Window:Notify({
+    Title = "Loaded!",
+    Desc = "Lost Front ready",
+    Time = 2
+})
+
+-- Now create tabs using Saul Library syntax
 local AimbotTab = Window:Tab({
     Title = "Aimbot",
-    Icon = "target"
+    Icon = "zap"
 })
 
 AimbotTab:Section({
     Title = "Aimbot"
 })
 
-local aimToggle = AimbotTab:Toggle({
+AimbotTab:Toggle({
     Title = "Enable Aimbot",
     Desc = "Toggle aimbot functionality",
-    Value = Config.AIM_Enabled,
-    Callback = function(v)
-        Config.AIM_Enabled = v
-        if not v then
+    Value = false,
+    Callback = function(value)
+        Config.AIM_Enabled = value
+        if not value then
             State.MobileAiming = false
             State.MobileAimToggled = false
             State.Aiming = false
             State.AimTarget = nil
             State.AimTargetChar = nil
         end
-        Window:Notify({
-            Title = v and "Aimbot ON" or "Aimbot OFF",
-            Desc = v and "Aimbot activated" or "Aimbot deactivated",
-            Time = 1.5
-        })
     end
 })
 
-local targetDropdown = AimbotTab:Dropdown({
+AimbotTab:Dropdown({
     Title = "Target Part",
-    Desc = "Select aimbot target part",
+    Desc = "Select target part for aimbot",
     List = {"Head", "Torso"},
-    Value = Config.AIM_TargetPart,
-    Callback = function(v)
-        Config.AIM_TargetPart = v
-        Window:Notify({
-            Title = "Target Part",
-            Desc = "Set to: " .. v,
-            Time = 1.5
-        })
+    Value = "Head",
+    Callback = function(value)
+        Config.AIM_TargetPart = value
     end
 })
 
-local fovSlider = AimbotTab:Slider({
+AimbotTab:Slider({
     Title = "FOV Size",
-    Desc = "Adjust aimbot field of view",
+    Desc = "Set aimbot field of view",
     Min = 50,
     Max = 500,
-    Rounding = 0,
     Value = Config.AIM_FOV,
-    Callback = function(v)
-        Config.AIM_FOV = v
-        if FOVCircle then FOVCircle.Radius = v end
+    Rounding = 0,
+    Callback = function(value)
+        Config.AIM_FOV = value
+        if FOVCircle then FOVCircle.Radius = value end
     end
 })
 
-local smoothSlider = AimbotTab:Slider({
+AimbotTab:Slider({
     Title = "Smoothing",
-    Desc = "Adjust aimbot smoothness",
+    Desc = "Set aimbot smoothness",
     Min = 0.01,
     Max = 0.15,
+    Value = 0.05,
     Rounding = 2,
-    Value = Config.AIM_Smooth,
-    Callback = function(v)
-        Config.AIM_Smooth = v
+    Callback = function(value)
+        Config.AIM_Smooth = value
     end
 })
 
@@ -898,48 +883,47 @@ AimbotTab:Section({
     Title = "Settings"
 })
 
-local showFovToggle = AimbotTab:Toggle({
+AimbotTab:Toggle({
     Title = "Show FOV Circle",
-    Desc = "Display aimbot FOV circle",
-    Value = Config.AIM_ShowFOV,
-    Callback = function(v)
-        Config.AIM_ShowFOV = v
+    Desc = "Display FOV circle on screen",
+    Value = true,
+    Callback = function(value)
+        Config.AIM_ShowFOV = value
         if not FOVCircle then CreateFOVCircle() end
-        if FOVCircle then FOVCircle.Visible = v end
+        if FOVCircle then FOVCircle.Visible = value end
     end
 })
 
-local stickyToggle = AimbotTab:Toggle({
+AimbotTab:Toggle({
     Title = "Sticky Targeting",
     Desc = "Keep locked on target",
-    Value = Config.AIM_Sticky,
-    Callback = function(v)
-        Config.AIM_Sticky = v
+    Value = true,
+    Callback = function(value)
+        Config.AIM_Sticky = value
     end
 })
 
-local stickySlider = AimbotTab:Slider({
+AimbotTab:Slider({
     Title = "Sticky Duration",
-    Desc = "Time to stay locked on target",
+    Desc = "How long to stick to target",
     Min = 0.2,
     Max = 2.0,
+    Value = 0.8,
     Rounding = 1,
-    Value = Config.AIM_StickyTime,
-    Callback = function(v)
-        Config.AIM_StickyTime = v
+    Callback = function(value)
+        Config.AIM_StickyTime = value
     end
 })
 
-local teamCheckToggle = AimbotTab:Toggle({
+AimbotTab:Toggle({
     Title = "Team Check",
     Desc = "Ignore teammates",
-    Value = Config.AIM_TeamCheck,
-    Callback = function(v)
-        Config.AIM_TeamCheck = v
+    Value = true,
+    Callback = function(value)
+        Config.AIM_TeamCheck = value
     end
 })
 
--- Таб ESP
 local ESPTab = Window:Tab({
     Title = "ESP",
     Icon = "eye"
@@ -949,33 +933,33 @@ ESPTab:Section({
     Title = "ESP Settings"
 })
 
-local espToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Enable ESP",
     Desc = "Toggle ESP functionality",
-    Value = Config.ESP_Enabled,
-    Callback = function(v)
-        Config.ESP_Enabled = v
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Enabled = value
     end
 })
 
-local colorPicker = ESPTab:ColorPicker({
+ESPTab:ColorPicker({
     Title = "ESP Color",
-    Desc = "Select ESP color",
-    Value = Config.ESP_BoxColor,
-    Callback = function(color)
-        Config.ESP_BoxColor = color
+    Desc = "Set ESP box color",
+    Value = Color3.fromRGB(255, 50, 50),
+    Callback = function(r, g, b)
+        Config.ESP_BoxColor = Color3.fromRGB(r, g, b)
     end
 })
 
-local maxDistSlider = ESPTab:Slider({
+ESPTab:Slider({
     Title = "Max Distance",
     Desc = "Maximum ESP render distance",
     Min = 500,
     Max = 3000,
+    Value = 1500,
     Rounding = 0,
-    Value = Config.ESP_MaxDistance,
-    Callback = function(v)
-        Config.ESP_MaxDistance = v
+    Callback = function(value)
+        Config.ESP_MaxDistance = value
     end
 })
 
@@ -983,48 +967,48 @@ ESPTab:Section({
     Title = "Display"
 })
 
-local boxToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Show Box",
-    Desc = "Display player boxes",
-    Value = Config.ESP_Box,
-    Callback = function(v)
-        Config.ESP_Box = v
+    Desc = "Display box around players",
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Box = value
     end
 })
 
-local nameToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Show Names",
     Desc = "Display player names",
-    Value = Config.ESP_Name,
-    Callback = function(v)
-        Config.ESP_Name = v
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Name = value
     end
 })
 
-local distanceToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Show Distance",
-    Desc = "Display player distance",
-    Value = Config.ESP_Distance,
-    Callback = function(v)
-        Config.ESP_Distance = v
+    Desc = "Display distance to players",
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Distance = value
     end
 })
 
-local healthToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Show Health",
     Desc = "Display health bars",
-    Value = Config.ESP_Health,
-    Callback = function(v)
-        Config.ESP_Health = v
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Health = value
     end
 })
 
-local skeletonToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Show Skeleton",
     Desc = "Display player skeletons",
-    Value = Config.ESP_Skeleton,
-    Callback = function(v)
-        Config.ESP_Skeleton = v
+    Value = true,
+    Callback = function(value)
+        Config.ESP_Skeleton = value
     end
 })
 
@@ -1032,12 +1016,12 @@ ESPTab:Section({
     Title = "Filters"
 })
 
-local espTeamToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Team Check",
     Desc = "Ignore teammates in ESP",
-    Value = Config.ESP_TeamCheck,
-    Callback = function(v)
-        Config.ESP_TeamCheck = v
+    Value = true,
+    Callback = function(value)
+        Config.ESP_TeamCheck = value
     end
 })
 
@@ -1045,40 +1029,39 @@ ESPTab:Section({
     Title = "Radar"
 })
 
-local radarToggle = ESPTab:Toggle({
+ESPTab:Toggle({
     Title = "Enable Radar",
-    Desc = "Toggle radar display",
-    Value = Radar.Enabled,
-    Callback = function(v)
-        Radar.Enabled = v
+    Desc = "Toggle mini-radar display",
+    Value = true,
+    Callback = function(value)
+        Radar.Enabled = value
     end
 })
 
-local radarSizeSlider = ESPTab:Slider({
+ESPTab:Slider({
     Title = "Radar Size",
-    Desc = "Adjust radar size",
+    Desc = "Set radar size",
     Min = 80,
     Max = 200,
+    Value = 140,
     Rounding = 0,
-    Value = Radar.Size,
-    Callback = function(v)
-        Radar.Size = v
+    Callback = function(value)
+        Radar.Size = value
     end
 })
 
-local radarRangeSlider = ESPTab:Slider({
+ESPTab:Slider({
     Title = "Radar Range",
-    Desc = "Adjust radar detection range",
+    Desc = "Set radar detection range",
     Min = 100,
     Max = 500,
+    Value = 250,
     Rounding = 0,
-    Value = Radar.Range,
-    Callback = function(v)
-        Radar.Range = v
+    Callback = function(value)
+        Radar.Range = value
     end
 })
 
--- Таб Misc
 local MiscTab = Window:Tab({
     Title = "Misc",
     Icon = "settings"
@@ -1088,195 +1071,42 @@ MiscTab:Section({
     Title = "Actions"
 })
 
-local testBtn = MiscTab:Button({
-    Title = "🔫 Test Aimbot",
-    Desc = "Test aimbot functionality",
-    Callback = function()
-        testBtn:SetTitle("Testing...")
-        task.wait(1)
-        Window:Notify({
-            Title = "✅ Test Complete",
-            Desc = "Aimbot system: " .. (Config.AIM_Enabled and "ACTIVE" or "INACTIVE"),
-            Time = 2
-        })
-        testBtn:SetTitle("🔫 Test Aimbot")
-    end
-})
-
 MiscTab:Button({
-    Title = "🔄 Refresh Targets",
-    Desc = "Force refresh target list",
+    Title = "Unload Script",
+    Desc = "Remove script from game",
     Callback = function()
-        RefreshTargets()
         Window:Notify({
-            Title = "Targets Refreshed",
-            Desc = "Updated target list",
-            Time = 1.5
+            Title = "Unloading",
+            Desc = "Goodbye!",
+            Time = 1
         })
+        task.wait(0.5)
+        Unload()
     end
 })
 
-MiscTab:Button({
-    Title = "🚫 Unload Script",
-    Desc = "Remove all features",
-    Callback = function()
-        Window:Dialog({
-            Title = "Confirm Unload",
-            Desc = "Are you sure you want to unload?",
-            Button1 = {
-                Title = "Yes",
-                Color = Color3.fromRGB(0, 188, 0),
-                Callback = function()
-                    Window:Notify({
-                        Title = "Unloading",
-                        Desc = "Goodbye!",
-                        Time = 1
-                    })
-                    task.wait(0.5)
-                    Unload()
-                end
-            },
-            Button2 = {
-                Title = "No",
-                Color = Color3.fromRGB(226, 39, 6),
-                Callback = function()
-                    Window:Notify({
-                        Title = "Cancelled",
-                        Desc = "Unload cancelled",
-                        Time = 1
-                    })
-                end
-            }
-        })
-    end
-})
-
--- Мобильные функции
 if IsMobile then
-    local MobileTab = Window:Tab({
-        Title = "Mobile",
-        Icon = "smartphone"
+    -- Note: Saul Library doesn't have built-in AimButton like Xan UI
+    -- You'll need to handle mobile controls separately
+    ESPTab:Label({
+        Title = "Mobile Mode",
+        Desc = "Mobile controls not implemented in Saul Library"
     })
-    
-    MobileTab:Section({
-        Title = "Mobile Controls"
-    })
-    
-    local aimButton = nil
-    
-    MobileTab:Toggle({
-        Title = "Show Aim Button",
-        Desc = "Display mobile aim button",
-        Value = true,
-        Callback = function(v)
-            if aimButton then
-                aimButton.Visible = v
-            else
-                -- Создаем кнопку при первом включении
-                local screenGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-                local aimFrame = Instance.new("Frame")
-                aimFrame.Name = "MobileAimButton"
-                aimFrame.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-                aimFrame.BackgroundTransparency = 0.3
-                aimFrame.BorderSizePixel = 0
-                aimFrame.Size = UDim2.new(0, 70, 0, 70)
-                aimFrame.Position = UDim2.new(1, -80, 0.5, -35)
-                aimFrame.ZIndex = 1000
-                
-                local corner = Instance.new("UICorner")
-                corner.CornerRadius = UDim.new(1, 0)
-                corner.Parent = aimFrame
-                
-                local stroke = Instance.new("UIStroke")
-                stroke.Color = Color3.fromRGB(255, 255, 255)
-                stroke.Thickness = 2
-                stroke.Parent = aimFrame
-                
-                local label = Instance.new("TextLabel")
-                label.Text = "AIM"
-                label.Font = Enum.Font.GothamBold
-                label.TextSize = 14
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Parent = aimFrame
-                
-                aimFrame.Parent = screenGui
-                aimButton = aimFrame
-                
-                -- Touch handling
-                aimFrame.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        State.MobileAiming = true
-                        State.Aiming = true
-                        aimFrame.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
-                        label.Text = "ON"
-                    end
-                end)
-                
-                aimFrame.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        State.MobileAiming = false
-                        State.Aiming = false
-                        State.AimTarget = nil
-                        State.AimTargetChar = nil
-                        aimFrame.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-                        label.Text = "AIM"
-                    end
-                end)
-            end
+else
+    Connections.InputBegan = UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.Insert then
+            -- Toggle window visibility (handled by library)
+        elseif input.KeyCode == Enum.KeyCode.Home then
+            Unload()
         end
-    })
-    
-    MobileTab:Label({
-        Title = "Mobile Info",
-        Desc = "Use the red AIM button for aimbot\nTouch and hold to activate"
-    })
+    end)
 end
 
--- Информационная вкладка
-local InfoTab = Window:Tab({
-    Title = "Info",
-    Icon = "info"
-})
-
-InfoTab:Section({
-    Title = "System Status"
-})
-
-local statusLabel = InfoTab:Label({
-    Title = "Status: ACTIVE",
-    Desc = "Lost Front v1.0"
-})
-
-local targetsLabel = InfoTab:Label({
-    Title = "Targets: 0",
-    Desc = "Waiting for detection..."
-})
-
-local fpsLabel = InfoTab:Label({
-    Title = "FPS: --",
-    Desc = "Performance monitor"
-})
-
--- Обновление информации в реальном времени
-Connections.InfoUpdate = game:GetService("RunService").RenderStepped:Connect(function()
-    local targetCount = 0
-    for _ in pairs(Cache.Targets) do
-        targetCount += 1
+-- Start main loop
+task.spawn(function()
+    while not State.Unloaded do
+        MainLoop()
+        task.wait()
     end
-    
-    targetsLabel:SetTitle("Targets: " .. targetCount)
-    targetsLabel:SetDesc("Detected in " .. Config.ESP_MaxDistance .. "m range")
-    
-    -- Простой FPS счетчик
-    fpsLabel:SetTitle("FPS: " .. math.floor(1/workspace.DistributedGameTime))
 end)
-
-Window:Notify({
-    Title = "✅ Lost Front Loaded",
-    Desc = "ESP & Aimbot system ready",
-    Time = 3
-})
-
-print("[Lost Front] Script successfully loaded")
