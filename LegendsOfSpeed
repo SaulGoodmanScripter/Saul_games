@@ -1,13 +1,14 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Loader_Ui"))()
 -- Legends Of Speed - Saul Hub версия
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
 local Window = Library:Window({
     Title = "Legends Of Speed",
     Desc = "Legends Of Speed",
     Icon = 92155476988079,
-    Theme = "NewYear",
+    Theme = "Cyberpunk",
     Config = {
         Keybind = Enum.KeyCode.LeftControl,
-        Size = UDim2.new(0, 550, 0, 350)
+        Size = UDim2.new(0, 500, 0, 350)
     },
     CloseUIButton = {
         Enabled = true,
@@ -826,6 +827,44 @@ how:Section({Title = "Notes"})
 how:Label({
     Title = "Important Notes:",
     Desc = "> Make sure your Rebirth is Odd\n> The Power Pet Will Return If You Disconnect"
+})
+-- ВКЛАДКА CREDITS
+local Tab8 = Window:Tab({Title = "👤 Credits", Icon = "heart"})
+
+Tab8:Section({Title = "👑 Разработчики"})
+
+Tab8:Label({
+    Title = "👤 Saul Goodman",
+    Desc = "Создатель и главный разработчик\nTelegram: @SaulGoodmanScript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/SaulGoodmanScript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
+
+Tab8:Label({
+    Title = "🤝 Lori Script",
+    Desc = "Партнер проекта\nTelegram: @loriscript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/loriscript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
 })
 
 Notify("Legends Of Speed", "Script loaded successfully!", 5)
