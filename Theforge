@@ -1,0 +1,596 @@
+--[[
+    FORGE: ULTIMATE FUSION - Saul Hub Version
+    Fixed multi-tab issue
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local lp = Players.LocalPlayer
+
+-- Load Saul Hub Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
+
+-- GLOBAL SETTINGS
+local Settings = {
+    Speed = 16,
+    Jump = 50,
+    InfJump = false,
+    Fullbright = false,
+    ESPEnabled = false,
+    GodMode = false,
+    SpeedMultiplier = 1
+}
+
+-- LOCAL VARIABLES
+local CharConnection = nil
+local JumpConnection = nil
+local GodModeActive = false
+
+-- CREATE MAIN WINDOW
+local Window = Library:Window({
+    Title = "THE FORGE",
+    Desc = "By SaulHub",
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 500, 0, 350)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "HIDE/SHOW"
+    }
+})
+
+-- ============ CREATE TABS ============
+
+-- MAIN TAB (Character Mods)
+local MainTab = Window:Tab({
+    Title = "⚡ MAIN",
+    Icon = "zap"
+})
+
+MainTab:Section({Title = "CHARACTER MODS"})
+
+-- GOD MODE
+local godModeToggle = MainTab:Toggle({
+    Title = "🛡️ GOD MODE",
+    Desc = "Immortality + Auto-heal",
+    Value = false,
+    Callback = function(state)
+        Settings.GodMode = state
+        GodModeActive = state
+        
+        if state then
+            task.spawn(function()
+                while GodModeActive do
+                    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                        local humanoid = lp.Character.Humanoid
+                        humanoid.MaxHealth = math.huge
+                        humanoid.Health = math.huge
+                        
+                        -- Auto-heal logic
+                        if lp.Character:FindFirstChild("HumanoidRootPart") then
+                            local root = lp.Character.HumanoidRootPart
+                            
+                            for _, obj in pairs(Workspace:GetDescendants()) do
+                                if not GodModeActive then break end
+                                
+                                local healNames = {"Medkit", "HealthPack", "Heal", "Potion", "Food"}
+                                local isHealItem = false
+                                
+                                for _, name in pairs(healNames) do
+                                    if obj.Name:lower():find(name:lower()) then
+                                        isHealItem = true
+                                        break
+                                    end
+                                end
+                                
+                                if isHealItem and obj:IsA("BasePart") then
+                                    local distance = (obj.Position - root.Position).Magnitude
+                                    if distance < 50 then
+                                        local touch = obj:FindFirstChild("TouchTransmitter") or obj:FindFirstChildOfClass("TouchTransmitter")
+                                        if touch then
+                                            firetouchinterest(root, obj, 0)
+                                            firetouchinterest(root, obj, 1)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+            Window:Notify({
+                Title = "GOD MODE",
+                Desc = "God Mode activated!",
+                Time = 3
+            })
+        else
+            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                lp.Character.Humanoid.MaxHealth = 100
+                lp.Character.Humanoid.Health = 100
+            end
+        end
+    end
+})
+
+-- SPEED
+local speedToggle = MainTab:Toggle({
+    Title = "⚡ SUPER SPEED x5",
+    Desc = "Physics-based speed boost",
+    Value = false,
+    Callback = function(state)
+        if state then
+            Settings.Speed = 100
+            Settings.SpeedMultiplier = 5
+            
+            if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                local root = lp.Character.HumanoidRootPart
+                
+                -- Clear existing
+                for _, v in pairs(root:GetChildren()) do
+                    if v:IsA("BodyVelocity") then v:Destroy() end
+                end
+                
+                -- Create new BodyVelocity
+                local bv = Instance.new("BodyVelocity")
+                bv.Name = "SpeedBoost"
+                bv.MaxForce = Vector3.new(40000, 0, 40000)
+                bv.Velocity = Vector3.new(0, 0, 0)
+                bv.Parent = root
+                
+                CharConnection = RunService.Heartbeat:Connect(function()
+                    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                        local humanoid = lp.Character.Humanoid
+                        if humanoid.MoveDirection.Magnitude > 0 then
+                            bv.Velocity = humanoid.MoveDirection * (Settings.Speed * 1.5)
+                        else
+                            bv.Velocity = Vector3.new(0, 0, 0)
+                        end
+                        humanoid.WalkSpeed = Settings.Speed
+                    end
+                end)
+            end
+        else
+            Settings.Speed = 16
+            Settings.SpeedMultiplier = 1
+            
+            if CharConnection then
+                CharConnection:Disconnect()
+                CharConnection = nil
+            end
+            
+            if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                local bv = lp.Character.HumanoidRootPart:FindFirstChild("SpeedBoost")
+                if bv then bv:Destroy() end
+                
+                local humanoid = lp.Character:FindFirstChild("Humanoid")
+                if humanoid then humanoid.WalkSpeed = 16 end
+            end
+        end
+    end
+})
+
+-- JUMP
+local jumpToggle = MainTab:Toggle({
+    Title = "🚀 MEGA JUMP",
+    Desc = "High jump with physics",
+    Value = false,
+    Callback = function(state)
+        Settings.InfJump = state
+        
+        if state then
+            JumpConnection = RunService.Heartbeat:Connect(function()
+                if Settings.InfJump and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    local root = lp.Character.HumanoidRootPart
+                    local humanoid = lp.Character:FindFirstChild("Humanoid")
+                    
+                    if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                        local bv = root:FindFirstChild("JumpBoost")
+                        if not bv then
+                            bv = Instance.new("BodyVelocity")
+                            bv.Name = "JumpBoost"
+                            bv.MaxForce = Vector3.new(0, math.huge, 0)
+                            bv.Velocity = Vector3.new(0, 200, 0)
+                            bv.Parent = root
+                        end
+                    else
+                        local bv = root:FindFirstChild("JumpBoost")
+                        if bv then bv:Destroy() end
+                    end
+                end
+            end)
+        else
+            if JumpConnection then
+                JumpConnection:Disconnect()
+                JumpConnection = nil
+            end
+            
+            if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                local bv = lp.Character.HumanoidRootPart:FindFirstChild("JumpBoost")
+                if bv then bv:Destroy() end
+            end
+        end
+    end
+})
+
+-- MANUAL SPEED/JUMP SLIDERS
+MainTab:Section({Title = "MANUAL SETTINGS"})
+
+local speedSlider = MainTab:Slider({
+    Title = "WALK SPEED",
+    Desc = "Manual speed control",
+    Min = 16,
+    Max = 200,
+    Rounding = 0,
+    Value = 16,
+    Callback = function(value)
+        Settings.Speed = value
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") and not Settings.SpeedMultiplier > 1 then
+            lp.Character.Humanoid.WalkSpeed = value
+        end
+    end
+})
+
+local jumpSlider = MainTab:Slider({
+    Title = "JUMP POWER",
+    Desc = "Manual jump control",
+    Min = 50,
+    Max = 500,
+    Rounding = 0,
+    Value = 50,
+    Callback = function(value)
+        Settings.Jump = value
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") and not Settings.InfJump then
+            lp.Character.Humanoid.JumpPower = value
+        end
+    end
+})
+
+-- ============ VISUAL TAB ============
+
+local VisualTab = Window:Tab({
+    Title = "👁️ VISUAL",
+    Icon = "eye"
+})
+
+VisualTab:Section({Title = "VISUAL EFFECTS"})
+
+-- ESP
+local espToggle = VisualTab:Toggle({
+    Title = "👁️ PLAYER ESP",
+    Desc = "Highlight other players",
+    Value = false,
+    Callback = function(state)
+        Settings.ESPEnabled = state
+        
+        if state then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= lp and player.Character then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "FORGE_ESP"
+                    highlight.FillColor = Color3.fromRGB(255, 50, 50)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.FillTransparency = 0.5
+                    highlight.Parent = player.Character
+                end
+            end
+            
+            Players.PlayerAdded:Connect(function(player)
+                player.CharacterAdded:Connect(function(char)
+                    if Settings.ESPEnabled then
+                        task.wait(1)
+                        local highlight = Instance.new("Highlight")
+                        highlight.Name = "FORGE_ESP"
+                        highlight.FillColor = Color3.fromRGB(255, 50, 50)
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        highlight.FillTransparency = 0.5
+                        highlight.Parent = char
+                    end
+                end)
+            end)
+        else
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character then
+                    local highlight = player.Character:FindFirstChild("FORGE_ESP")
+                    if highlight then highlight:Destroy() end
+                end
+            end
+        end
+    end
+})
+
+-- FULLBRIGHT
+local fullbrightToggle = VisualTab:Toggle({
+    Title = "☀️ FULLBRIGHT",
+    Desc = "Permanent daylight",
+    Value = false,
+    Callback = function(state)
+        Settings.Fullbright = state
+        
+        if state then
+            -- Save original
+            if not Settings.OriginalLighting then
+                Settings.OriginalLighting = {
+                    Ambient = Lighting.Ambient,
+                    OutdoorAmbient = Lighting.OutdoorAmbient,
+                    ClockTime = Lighting.ClockTime,
+                    Brightness = Lighting.Brightness
+                }
+            end
+            
+            -- Apply fullbright
+            Lighting.Ambient = Color3.new(1, 1, 1)
+            Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+            Lighting.ClockTime = 12
+            Lighting.Brightness = 2
+            Lighting.GlobalShadows = false
+        else
+            -- Restore original
+            if Settings.OriginalLighting then
+                Lighting.Ambient = Settings.OriginalLighting.Ambient
+                Lighting.OutdoorAmbient = Settings.OriginalLighting.OutdoorAmbient
+                Lighting.ClockTime = Settings.OriginalLighting.ClockTime
+                Lighting.Brightness = Settings.OriginalLighting.Brightness
+                Lighting.GlobalShadows = true
+            end
+        end
+    end
+})
+
+-- ============ PLAYER TAB ============
+
+local PlayerTab = Window:Tab({
+    Title = "🎭 PLAYERS",
+    Icon = "users"
+})
+
+PlayerTab:Section({Title = "PLAYER ACTIONS"})
+
+-- TELEPORT TO PLAYER
+PlayerTab:Button({
+    Title = "🎯 TELEPORT TO PLAYER",
+    Desc = "Teleport to nearest player",
+    Callback = function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPos = player.Character.HumanoidRootPart.Position
+                
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    lp.Character.HumanoidRootPart.CFrame = CFrame.new(
+                        targetPos.X,
+                        targetPos.Y + 3,
+                        targetPos.Z
+                    )
+                    
+                    Window:Notify({
+                        Title = "TELEPORT",
+                        Desc = "Teleported to " .. player.Name,
+                        Time = 3
+                    })
+                    break
+                end
+            end
+        end
+    end
+})
+
+-- PLAYER LIST
+PlayerTab:Section({Title = "PLAYER LIST"})
+
+local playerDropdown = PlayerTab:Dropdown({
+    Title = "SELECT PLAYER",
+    Desc = "Choose player for actions",
+    List = {},
+    Value = "",
+    Callback = function(selected)
+        if selected ~= "" then
+            Window:Notify({
+                Title = "SELECTED",
+                Desc = "Player: " .. selected,
+                Time = 2
+            })
+        end
+    end
+})
+
+-- Update player list
+task.spawn(function()
+    while true do
+        local players = {}
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= lp then
+                table.insert(players, player.Name)
+            end
+        end
+        
+        if #players > 0 then
+            playerDropdown:Clear()
+            for _, name in ipairs(players) do
+                playerDropdown:Add(name)
+            end
+        else
+            playerDropdown:Clear()
+            playerDropdown:Add("No players found")
+        end
+        
+        task.wait(5)
+    end
+end)
+
+-- ============ UTILITY TAB ============
+
+local UtilityTab = Window:Tab({
+    Title = "🛠️ UTILITY",
+    Icon = "settings"
+})
+
+UtilityTab:Section({Title = "SYSTEM TOOLS"})
+
+-- RESET ALL
+UtilityTab:Button({
+    Title = "🔄 RESET ALL",
+    Desc = "Reset all settings to default",
+    Callback = function()
+        -- Reset settings
+        Settings.Speed = 16
+        Settings.Jump = 50
+        Settings.InfJump = false
+        Settings.Fullbright = false
+        Settings.ESPEnabled = false
+        Settings.GodMode = false
+        Settings.SpeedMultiplier = 1
+        GodModeActive = false
+        
+        -- Disconnect connections
+        if CharConnection then
+            CharConnection:Disconnect()
+            CharConnection = nil
+        end
+        
+        if JumpConnection then
+            JumpConnection:Disconnect()
+            JumpConnection = nil
+        end
+        
+        -- Reset toggles
+        if godModeToggle then
+            godModeToggle:SetValue(false)
+        end
+        if speedToggle then
+            speedToggle:SetValue(false)
+        end
+        if jumpToggle then
+            jumpToggle:SetValue(false)
+        end
+        if espToggle then
+            espToggle:SetValue(false)
+        end
+        if fullbrightToggle then
+            fullbrightToggle:SetValue(false)
+        end
+        
+        -- Reset sliders
+        if speedSlider then
+            speedSlider:SetValue(16)
+        end
+        if jumpSlider then
+            jumpSlider:SetValue(50)
+        end
+        
+        -- Clear physics
+        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            local root = lp.Character.HumanoidRootPart
+            for _, obj in pairs(root:GetChildren()) do
+                if obj:IsA("BodyVelocity") or obj:IsA("BodyForce") then
+                    obj:Destroy()
+                end
+            end
+        end
+        
+        -- Clear ESP
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local highlight = player.Character:FindFirstChild("FORGE_ESP")
+                if highlight then highlight:Destroy() end
+            end
+        end
+        
+        -- Reset lighting
+        if Settings.OriginalLighting then
+            Lighting.Ambient = Settings.OriginalLighting.Ambient
+            Lighting.OutdoorAmbient = Settings.OriginalLighting.OutdoorAmbient
+            Lighting.ClockTime = Settings.OriginalLighting.ClockTime
+            Lighting.Brightness = Settings.OriginalLighting.Brightness
+            Lighting.GlobalShadows = true
+        end
+        
+        Window:Notify({
+            Title = "RESET",
+            Desc = "All settings have been reset",
+            Time = 3
+        })
+    end
+})
+
+-- COPY SETTINGS
+UtilityTab:Button({
+    Title = "📋 COPY SETTINGS",
+    Desc = "Copy current settings to clipboard",
+    Callback = function()
+        local settingsText = "FORGE Settings:\n"
+        settingsText = settingsText .. "Speed: " .. Settings.Speed .. "\n"
+        settingsText = settingsText .. "Jump: " .. Settings.Jump .. "\n"
+        settingsText = settingsText .. "God Mode: " .. tostring(Settings.GodMode) .. "\n"
+        settingsText = settingsText .. "ESP: " .. tostring(Settings.ESPEnabled) .. "\n"
+        settingsText = settingsText .. "Fullbright: " .. tostring(Settings.Fullbright) .. "\n"
+        
+        setclipboard(settingsText)
+        Window:Notify({
+            Title = "COPIED",
+            Desc = "Settings copied to clipboard",
+            Time = 3
+        })
+    end
+})
+
+-- INFO
+UtilityTab:Section({Title = "INFORMATION"})
+
+UtilityTab:Label({
+    Title = "THE FORGE ",
+    Desc = "Ultimate Fusion - Saul Hub Edition"
+})
+
+UtilityTab:Label({
+    Title = "FEATURES",
+    Desc = "• God Mode + Auto-heal\n• Super Speed x5\n• Mega Jump Physics\n• Player ESP\n• Fullbright\n• Player Teleport"
+})
+
+-- ============ AUTO-APPLY SETTINGS ============
+
+RunService.Heartbeat:Connect(function()
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        local humanoid = lp.Character.Humanoid
+        
+        -- Apply manual speed/jump if mods not active
+        if Settings.SpeedMultiplier == 1 then
+            humanoid.WalkSpeed = Settings.Speed
+        end
+        
+        if not Settings.InfJump then
+            humanoid.JumpPower = Settings.Jump
+        end
+        
+        -- God Mode
+        if GodModeActive then
+            humanoid.MaxHealth = math.huge
+            humanoid.Health = math.huge
+        end
+    end
+    
+    -- Auto-update ESP
+    if Settings.ESPEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= lp and player.Character and not player.Character:FindFirstChild("FORGE_ESP") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "FORGE_ESP"
+                highlight.FillColor = Color3.fromRGB(255, 50, 50)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.Parent = player.Character
+            end
+        end
+    end
+end)
+
+-- Welcome notification
+Window:Notify({
+    Title = "THE FORGE",
+    Desc = "Ultimate Fusion loaded successfully!\nUse RightControl to toggle UI",
+    Time = 5
+})
