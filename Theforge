@@ -1,8 +1,4 @@
---[[
-    FORGE: ULTIMATE FUSION - Saul Hub Version
-    Fixed multi-tab issue
-]]
-
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Loader_Ui"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -587,7 +583,44 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
+-- ВКЛАДКА CREDITS
+local Tab8 = Window:Tab({Title = "👤 Credits", Icon = "heart"})
 
+Tab8:Section({Title = "👑 Разработчики"})
+
+Tab8:Label({
+    Title = "👤 Saul Goodman",
+    Desc = "Создатель и главный разработчик\nTelegram: @SaulGoodmanScript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/SaulGoodmanScript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
+
+Tab8:Label({
+    Title = "🤝 Lori Script",
+    Desc = "Партнер проекта\nTelegram: @loriscript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/loriscript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
 -- Welcome notification
 Window:Notify({
     Title = "THE FORGE",
