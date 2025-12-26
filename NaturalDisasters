@@ -29,9 +29,9 @@ local character, hrp
 
 -- ====== CREATE WINDOW ======
 local Window = Library:Window({
-    Title = "AUTO FARM GOD MODE",
-    Desc = "By Zaluli_Hrieta",
-    Theme = "Dark",
+    Title = "Natural disaster",
+    Desc = "By Saul Hub",
+    Theme = "Ocean",
     Config = {
         Keybind = Enum.KeyCode.RightControl,
         Size = UDim2.new(0, 550, 0, 350)
