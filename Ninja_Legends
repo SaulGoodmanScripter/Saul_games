@@ -1,0 +1,678 @@
+--[[
+    ⚡ NINJA LEGENDS - SAUL HUB EDITION ⚡
+    Unique & Beautiful Interface
+    Library: Saul Hub (Rare & Beautiful)
+    Author: M4k3By41W1thPr0mpt
+--]]
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
+
+-- Create stylish window
+local Window = Library:Window({
+    Title = "⚡ NINJA LEGENDS",
+    Desc = "By Saul Hub",
+    Icon = "zap",
+    Theme = "Cyberpunk",
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 500, 0, 350)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "HIDE/SHOW"
+    }
+})
+
+-- Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Tabs with beautiful icons
+local tabs = {
+    main = Window:Tab({Title = "📊 Stats", Icon = "bar-chart"}),
+    farm = Window:Tab({Title = "🤖 Auto Farm", Icon = "cpu"}),
+    tp = Window:Tab({Title = "📍 Teleports", Icon = "map-pin"}),
+    egg = Window:Tab({Title = "💎 Crystals", Icon = "gem"}),
+    misc = Window:Tab({Title = "⚙️ Misc", Icon = "settings"})
+}
+
+-- Stats section
+tabs.main:Section({Title = "📈 Game Stats"})
+
+-- Real-time statistics
+local stats = {
+    time = tabs.main:Label({Title = "🕒 Game Time: Loading..."}),
+    fps = tabs.main:Label({Title = "🎮 FPS: Loading..."}),
+    ping = tabs.main:Label({Title = "📶 Ping: Loading..."}),
+    coins = tabs.main:Label({Title = "💰 Coins: Loading..."}),
+    chi = tabs.main:Label({Title = "🌀 Chi: Loading..."})
+}
+
+-- Update stats
+spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            -- Game Time
+            local GameTime = math.floor(workspace.DistributedGameTime + 0.5)
+            local Hour = math.floor(GameTime / 3600) % 24
+            local Minute = math.floor(GameTime / 60) % 60
+            local Second = GameTime % 60
+            stats.time:SetTitle(string.format("🕒 Time: %02d:%02d:%02d", Hour, Minute, Second))
+            
+            -- FPS
+            local Fps = math.floor(workspace:GetRealPhysicsFPS())
+            stats.fps:SetTitle("🎮 FPS: " .. Fps)
+            
+            -- Ping
+            local Ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+            stats.ping:SetTitle("📶 Ping: " .. Ping)
+            
+            -- Game stats
+            if LocalPlayer:FindFirstChild("leaderstats") then
+                local leaderstats = LocalPlayer.leaderstats
+                if leaderstats:FindFirstChild("Coins") then
+                    stats.coins:SetTitle("💰 Coins: " .. leaderstats.Coins.Value)
+                end
+                if leaderstats:FindFirstChild("Chi") then
+                    stats.chi:SetTitle("🌀 Chi: " .. leaderstats.Chi.Value)
+                end
+            end
+        end)
+    end
+end)
+
+-- Character functions
+tabs.main:Section({Title = "🎭 Character"})
+
+-- Auto-update sliders on character change
+local speedValue = 16
+local jumpValue = 50
+
+local speedSlider = tabs.main:Slider({
+    Title = "🚀 Walk Speed",
+    Desc = "Change movement speed",
+    Min = 16,
+    Max = 500,
+    Rounding = 0,
+    Value = speedValue,
+    Callback = function(v)
+        speedValue = v
+        pcall(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.WalkSpeed = v
+            end
+        end)
+    end
+})
+
+local jumpSlider = tabs.main:Slider({
+    Title = "🦘 Jump Power",
+    Desc = "Change jump height",
+    Min = 50,
+    Max = 500,
+    Rounding = 0,
+    Value = jumpValue,
+    Callback = function(v)
+        jumpValue = v
+        pcall(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.JumpPower = v
+            end
+        end)
+    end
+})
+
+-- Auto-apply settings on respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = speedValue
+            LocalPlayer.Character.Humanoid.JumpPower = jumpValue
+        end
+    end)
+end)
+
+-- Quick actions
+tabs.main:Section({Title = "⚡ Quick Actions"})
+
+local tradingEnabled = false
+tabs.main:Toggle({
+    Title = "🤝 Trading",
+    Desc = tradingEnabled and "Enabled" or "Disabled",
+    Value = tradingEnabled,
+    Callback = function(state)
+        tradingEnabled = state
+        local args = {
+            [1] = state and "enableTrading" or "disableTrading"
+        }
+        game:GetService("ReplicatedStorage").rEvents.tradingEvent:FireServer(unpack(args))
+        
+        Window:Notify({
+            Title = state and "✅ Trading Enabled" or "❌ Trading Disabled",
+            Desc = state and "You can now trade items" or "Trading is disabled",
+            Time = 3
+        })
+    end
+})
+
+tabs.main:Toggle({
+    Title = "👻 Invisibility",
+    Desc = "Become invisible to other players",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait()
+                    pcall(function()
+                        LocalPlayer.ninjaEvent:FireServer("goInvisible")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+tabs.main:Toggle({
+    Title = "🎯 Disable Popups",
+    Desc = "Hide coin and chi popup effects",
+    Value = false,
+    Callback = function(state)
+        pcall(function()
+            LocalPlayer.PlayerGui.statEffectsGui.Enabled = not state
+            LocalPlayer.PlayerGui.hoopGui.Enabled = not state
+        end)
+    end
+})
+
+-- Player teleport system
+tabs.main:Section({Title = "👥 Player Teleport"})
+
+local selectedPlayer = nil
+local playerDropdown = tabs.main:Dropdown({
+    Title = "Select Player",
+    Desc = "For teleportation",
+    List = {"No players"},
+    Value = "No players",
+    Multi = false,
+    Callback = function(value)
+        selectedPlayer = value
+    end
+})
+
+-- Update player list function
+local function updatePlayerList()
+    local playerList = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(playerList, player.DisplayName .. " (@" .. player.Name .. ")")
+        end
+    end
+    
+    if #playerList == 0 then
+        playerList = {"No players"}
+    end
+    
+    playerDropdown:Clear()
+    for _, playerName in pairs(playerList) do
+        playerDropdown:Add(playerName)
+    end
+    
+    if #playerList > 1 then
+        playerDropdown:SetValue(playerList[1])
+    end
+end
+
+-- Teleport button
+tabs.main:Button({
+    Title = "🚀 Teleport to Player",
+    Desc = "Instant teleportation",
+    Callback = function()
+        if selectedPlayer and selectedPlayer ~= "No players" then
+            local playerName = selectedPlayer:match("%(@(.-)%)") or selectedPlayer:match("^([^%s]+)")
+            
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Name == playerName or player.DisplayName .. " (@" .. player.Name .. ")" == selectedPlayer then
+                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+                            Window:Notify({
+                                Title = "✅ Teleported",
+                                Desc = "To player: " .. player.DisplayName,
+                                Time = 3
+                            })
+                            return
+                        end
+                    end
+                end
+            end
+            Window:Notify({
+                Title = "❌ Error",
+                Desc = "Player not found",
+                Time = 3
+            })
+        end
+    end
+})
+
+-- Refresh button
+tabs.main:Button({
+    Title = "🔄 Refresh List",
+    Desc = "Update player list",
+    Callback = function()
+        updatePlayerList()
+        Window:Notify({
+            Title = "✅ List Updated",
+            Desc = "Players loaded",
+            Time = 2
+        })
+    end
+})
+
+-- Auto-update on player join/leave
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+updatePlayerList() -- Initial load
+
+-- AUTO FARM SYSTEM
+tabs.farm:Section({Title = "⚔️ Main Farm"})
+
+local autoSwing = tabs.farm:Toggle({
+    Title = "🔄 Auto Swing",
+    Desc = "Automatically attack with sword",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(0.1)
+                    pcall(function()
+                        LocalPlayer.ninjaEvent:FireServer("swingKatana")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+local autoSell = tabs.farm:Toggle({
+    Title = "💰 Auto Sell",
+    Desc = "Automatically sell items",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(1)
+                    pcall(function()
+                        if workspace.sellAreaCircles["sellAreaCircle15"] then
+                            workspace.sellAreaCircles["sellAreaCircle15"].circleInner.CFrame = 
+                                LocalPlayer.Character.HumanoidRootPart.CFrame
+                            task.wait(0.5)
+                            workspace.sellAreaCircles["sellAreaCircle15"].circleInner.CFrame = 
+                                workspace.Part.CFrame
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+-- Resource farming system
+tabs.farm:Section({Title = "📦 Resource Farm"})
+
+local farmChi = tabs.farm:Toggle({
+    Title = "🌀 Farm Chi",
+    Desc = "Auto collect blue Chi crystals",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(0.5)
+                    pcall(function()
+                        for _, v in pairs(workspace.spawnedCoins.Valley:GetChildren()) do
+                            if v.Name == "Blue Chi Crate" then
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(v.Position)
+                                task.wait(0.3)
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+local farmCoins = tabs.farm:Toggle({
+    Title = "💰 Farm Coins",
+    Desc = "Auto collect purple Coin crates",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(0.5)
+                    pcall(function()
+                        for _, v in pairs(workspace.spawnedCoins.Valley:GetChildren()) do
+                            if v.Name == "Purple Coin Crate" then
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(v.Position)
+                                task.wait(0.3)
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+-- Auto buy system
+tabs.farm:Section({Title = "🛒 Auto Buy"})
+
+tabs.farm:Toggle({
+    Title = "⚔️ Auto Buy Swords",
+    Desc = "Buy all available swords",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(2)
+                    pcall(function()
+                        LocalPlayer.ninjaEvent:FireServer("buyAllSwords", "Blazing Vortex Island")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+tabs.farm:Toggle({
+    Title = "🥋 Auto Buy Belts",
+    Desc = "Buy all available belts",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(2)
+                    pcall(function()
+                        LocalPlayer.ninjaEvent:FireServer("buyAllBelts", "Blazing Vortex Island")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+tabs.farm:Toggle({
+    Title = "🎯 Auto Buy Skills",
+    Desc = "Buy all available skills",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(2)
+                    pcall(function()
+                        LocalPlayer.ninjaEvent:FireServer("buyAllSkills", "Blazing Vortex Island")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+-- Hoops farm
+tabs.farm:Toggle({
+    Title = "🏀 Auto Hoops",
+    Desc = "Auto collect all hoops",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(0.5)
+                    pcall(function()
+                        for _, v in pairs(workspace.Hoops:GetDescendants()) do
+                            if v.ClassName == "MeshPart" then
+                                v.touchPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+-- TELEPORT SYSTEM
+tabs.tp:Section({Title = "🏝️ Island Teleports"})
+
+local ISLAND = {}
+for i, v in pairs(game.workspace.islandUnlockParts:GetChildren()) do
+    table.insert(ISLAND, v.Name)
+end
+
+tabs.tp:Dropdown({
+    Title = "Select Island",
+    Desc = "Teleport to islands",
+    List = ISLAND,
+    Value = ISLAND[1] or "",
+    Multi = false,
+    Callback = function(island)
+        pcall(function()
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local islandPart = game.Workspace.islandUnlockParts[island]
+                if islandPart and islandPart:FindFirstChild("islandSignPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = islandPart.islandSignPart.CFrame
+                    Window:Notify({
+                        Title = "✅ Teleported",
+                        Desc = "To island: " .. island,
+                        Time = 2
+                    })
+                end
+            end
+        end)
+    end
+})
+
+tabs.tp:Button({
+    Title = "🏆 Unlock All Islands",
+    Desc = "Visit all islands automatically",
+    Callback = function()
+        for i, v in next, game.workspace.islandUnlockParts:GetChildren() do
+            if v and v:FindFirstChild("islandSignPart") then
+                pcall(function()
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = v.islandSignPart.CFrame
+                end)
+                task.wait(0.2)
+            end
+        end
+        Window:Notify({
+            Title = "✅ All Islands Unlocked",
+            Desc = "Visited all available islands",
+            Time = 3
+        })
+    end
+})
+
+-- CRYSTAL SYSTEM
+tabs.egg:Section({Title = "💎 Crystals"})
+
+local Crystal = {}
+for i, v in pairs(game.workspace.mapCrystalsFolder:GetChildren()) do
+    table.insert(Crystal, v.Name)
+end
+
+local crystalDropdown = tabs.egg:Dropdown({
+    Title = "Select Crystal",
+    Desc = "Choose crystal to open",
+    List = Crystal,
+    Value = Crystal[1] or "",
+    Multi = false,
+    Callback = function(value)
+        _G.selectedCrystal = value
+    end
+})
+
+tabs.egg:Toggle({
+    Title = "🔓 Auto Open Crystal",
+    Desc = "Automatically open selected crystal",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state and _G.selectedCrystal do
+                    task.wait(0.5)
+                    pcall(function()
+                        game:GetService("ReplicatedStorage").rEvents.openCrystalRemote:InvokeServer("openCrystal", _G.selectedCrystal)
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+tabs.egg:Toggle({
+    Title = "🦄 Auto Evolve Pets",
+    Desc = "Automatically evolve all pets",
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while state do
+                    task.wait(1)
+                    pcall(function()
+                        for i, v in pairs(LocalPlayer.petsFolder:GetChildren()) do
+                            for i, x in pairs(v:GetChildren()) do
+                                game:GetService("ReplicatedStorage").rEvents.petEvolveEvent:FireServer("evolvePet", x.Name)
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+-- MISC FEATURES
+tabs.misc:Section({Title = "✨ Features"})
+
+tabs.misc:Toggle({
+    Title = "🌟 Infinite Jump",
+    Desc = "Jump infinitely in the air",
+    Value = false,
+    Callback = function(state)
+        _G.infiniteJump = state
+        if state then
+            game:GetService("UserInputService").JumpRequest:Connect(function()
+                if _G.infiniteJump then
+                    pcall(function()
+                        LocalPlayer.Character:FindFirstChildOfClass('Humanoid'):ChangeState("Jumping")
+                    end)
+                end
+            end)
+        end
+    end
+})
+
+tabs.misc:Toggle({
+    Title = "✨ Inf Double Jump",
+    Desc = "Unlimited double jumps",
+    Value = false,
+    Callback = function(state)
+        if state then
+            pcall(function()
+                if LocalPlayer:FindFirstChild("multiJumpCount") then
+                    LocalPlayer.multiJumpCount.Value = 999999
+                end
+            end)
+        end
+    end
+})
+
+tabs.misc:Button({
+    Title = "🌀 Get All Elements",
+    Desc = "Unlock all elemental powers",
+    Callback = function()
+        local elements = {
+            "Frost", "Inferno", "Lightning", "Electral Chaos",
+            "Masterful Wrath", "Shadow Charge", "Shadowfire",
+            "Eternity Storm", "Blazing Entity"
+        }
+        
+        for _, element in pairs(elements) do
+            pcall(function()
+                game.ReplicatedStorage.rEvents.elementMasteryEvent:FireServer(element)
+            end)
+            task.wait(0.1)
+        end
+        
+        Window:Notify({
+            Title = "✅ Elements Unlocked",
+            Desc = "All elemental powers obtained!",
+            Time = 3
+        })
+    end
+})
+
+tabs.misc:Button({
+    Title = "🔄 Rejoin Game",
+    Desc = "Rejoin the current server",
+    Callback = function()
+        Window:Dialog({
+            Title = "Rejoin Game",
+            Desc = "Are you sure you want to rejoin?",
+            Button1 = {
+                Title = "Yes",
+                Color = Color3.fromRGB(0, 188, 0),
+                Callback = function()
+                    local ts = game:GetService("TeleportService")
+                    ts:Teleport(game.PlaceId, LocalPlayer)
+                end
+            },
+            Button2 = {
+                Title = "No",
+                Color = Color3.fromRGB(226, 39, 6),
+                Callback = function()
+                    Window:Notify({
+                        Title = "Cancelled",
+                        Desc = "Rejoin cancelled",
+                        Time = 2
+                    })
+                end
+            }
+        })
+    end
+})
+
+-- Auto cleanup function
+local function cleanupToggles()
+    local toggles = {
+        autoSwing, autoSell, farmChi, farmCoins
+    }
+    
+    for _, toggle in pairs(toggles) do
+        if toggle then
+            toggle:SetValue(false)
+        end
+    end
+end
+
+-- Cleanup on death
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    cleanupToggles()
+end)
+
+-- Initial notification
+task.wait(2)
+Window:Notify({
+    Title = "⚡ Ninja Legends Hub Loaded",
+    Desc = "Press RightControl to hide/show UI\nSaul Hub Edition - Unique Design",
+    Time = 5
+})
