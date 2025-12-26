@@ -1,3 +1,4 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Loader_Ui"))()
 -- Load library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
 
@@ -369,3 +370,41 @@ task.spawn(function()
     
     SendChatMessage("Halah Nyocot")
 end)
+-- ВКЛАДКА CREDITS
+local Tab8 = Window:Tab({Title = "👤 Credits", Icon = "heart"})
+
+Tab8:Section({Title = "👑 Разработчики"})
+
+Tab8:Label({
+    Title = "👤 Saul Goodman",
+    Desc = "Создатель и главный разработчик\nTelegram: @SaulGoodmanScript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/SaulGoodmanScript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
+
+Tab8:Label({
+    Title = "🤝 Lori Script",
+    Desc = "Партнер проекта\nTelegram: @loriscript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/loriscript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
