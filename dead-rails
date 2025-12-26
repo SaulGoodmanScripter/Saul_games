@@ -1,0 +1,339 @@
+-- Load Saul Hub Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
+
+local player = game:GetService("Players").LocalPlayer
+
+-- CREATE MAIN WINDOW
+local Window = Library:Window({
+    Title = "KRT Hub | Dead Rails",
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 350, 0, 230)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "HIDE/SHOW"
+    }
+})
+
+-- ============ MAIN TAB ============
+local MainTab = Window:Tab({
+    Title = "Main",
+    Icon = "home"
+})
+
+MainTab:Button({
+    Title = "TP to Train",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/ringtaa/train.github.io/refs/heads/main/train.lua'))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Train",
+            Time = 2
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "TP to Sterling",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/ringtaa/sterlingnotifcation.github.io/refs/heads/main/Sterling.lua'))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Sterling",
+            Time = 2
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "TP to TeslaLab",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/ringtaa/tptotesla.github.io/refs/heads/main/Tptotesla.lua'))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Tesla Lab",
+            Time = 2
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "TP to Castle",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/castletpfast.github.io/refs/heads/main/FASTCASTLE.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Castle",
+            Time = 2
+        })
+    end
+})
+
+MainTab:Button({
+    Title = "TP to Fort",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tpfort.github.io/refs/heads/main/Tpfort.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Fort",
+            Time = 2
+        })
+    end
+})
+
+-- ============ OTHER TAB ============
+local OtherTab = Window:Tab({
+    Title = "Other",
+    Icon = "settings"
+})
+
+OtherTab:Button({
+    Title = "TP to End",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hbjrev/tpend.github.io/refs/heads/main/ringta.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to End",
+            Time = 2
+        })
+    end
+})
+
+OtherTab:Button({
+    Title = "TP to Bank",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Tptobank.github.io/refs/heads/main/Banktp.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Bank",
+            Time = 2
+        })
+    end
+})
+
+-- Gun Kill Aura
+local gunKillAuraActive = false
+OtherTab:Toggle({
+    Title = "Gun Aura (Kill Mobs)",
+    Value = false,
+    Callback = function(state)
+        gunKillAuraActive = state
+        if state then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ringtaa/Aimbot.github.io/refs/heads/main/Kill.lua"))()
+            Window:Notify({
+                Title = "Gun Aura",
+                Desc = "Gun Kill Aura ENABLED",
+                Time = 2
+            })
+        else
+            Window:Notify({
+                Title = "Gun Aura",
+                Desc = "Gun Kill Aura DISABLED",
+                Time = 2
+            })
+        end
+    end
+})
+
+-- Noclip functionality
+local noclipConnection
+local function enableNoclip()
+    if noclipConnection then return end
+    noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+local function disableNoclip()
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+    if player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+OtherTab:Button({
+    Title = "Noclip: ON",
+    Callback = function()
+        enableNoclip()
+        Window:Notify({
+            Title = "Noclip",
+            Desc = "Noclip ENABLED",
+            Time = 2
+        })
+    end
+})
+
+OtherTab:Button({
+    Title = "Noclip: OFF",
+    Callback = function()
+        disableNoclip()
+        Window:Notify({
+            Title = "Noclip",
+            Desc = "Noclip DISABLED",
+            Time = 2
+        })
+    end
+})
+
+-- Anti-Void functionality
+local antiVoidActive = false
+local antiVoidConnection
+
+local function startAntiVoid()
+    antiVoidConnection = game:GetService("RunService").Stepped:Connect(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = player.Character.HumanoidRootPart
+            if rootPart.Position.Y < -1 then
+                rootPart.CFrame = CFrame.new(70, 5, 30000)
+            end
+        end
+    end)
+end
+
+local function stopAntiVoid()
+    if antiVoidConnection then
+        antiVoidConnection:Disconnect()
+        antiVoidConnection = nil
+    end
+end
+
+OtherTab:Toggle({
+    Title = "Anti-Void",
+    Value = false,
+    Callback = function(state)
+        antiVoidActive = state
+        if state then
+            startAntiVoid()
+            Window:Notify({
+                Title = "Anti-Void",
+                Desc = "Anti-Void ENABLED",
+                Time = 2
+            })
+        else
+            stopAntiVoid()
+            Window:Notify({
+                Title = "Anti-Void",
+                Desc = "Anti-Void DISABLED",
+                Time = 2
+            })
+        end
+    end
+})
+
+-- ============ TOWNS TAB ============
+local TownsTab = Window:Tab({
+    Title = "Towns",
+    Icon = "map-pin"
+})
+
+TownsTab:Button({
+    Title = "Town 1",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown1.github.io/refs/heads/main/town1.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 1",
+            Time = 2
+        })
+    end
+})
+
+TownsTab:Button({
+    Title = "Town 2",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown2.github.io/refs/heads/main/town2.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 2",
+            Time = 2
+        })
+    end
+})
+
+TownsTab:Button({
+    Title = "Town 3",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown3.github.io/refs/heads/main/town3.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 3",
+            Time = 2
+        })
+    end
+})
+
+TownsTab:Button({
+    Title = "Town 4",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown4.github.io/refs/heads/main/town4.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 4",
+            Time = 2
+        })
+    end
+})
+
+TownsTab:Button({
+    Title = "Town 5",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown5.github.io/refs/heads/main/town5.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 5",
+            Time = 2
+        })
+    end
+})
+
+TownsTab:Button({
+    Title = "Town 6",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ringta9321/tptown6.github.io/refs/heads/main/town6.lua"))()
+        Window:Notify({
+            Title = "Teleport",
+            Desc = "Teleporting to Town 6",
+            Time = 2
+        })
+    end
+})
+
+-- ============ CREATOR TAB ============
+local CreatorTab = Window:Tab({
+    Title = "Creator",
+    Icon = "user"
+})
+
+CreatorTab:Button({
+    Title = "TG CHANNEL",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastefy.app/le3JMGVe/raw"))()
+        Window:Notify({
+            Title = "Telegram",
+            Desc = "Opening Telegram channel",
+            Time = 2
+        })
+    end
+})
+
+-- Welcome notification
+Window:Notify({
+    Title = "KRT Hub",
+    Desc = "Dead Rails script loaded successfully!\nUse RightControl to toggle UI",
+    Time = 5
+})
