@@ -1,3 +1,4 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Loader_Ui"))((
 -- Saul Hub версия для Build A Boat For Treasure
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
