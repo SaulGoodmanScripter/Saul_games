@@ -1,0 +1,618 @@
+-- Message Guy that exists#1915 if you have issues
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+game:GetService("GuiService"):ClearError()
+
+-- Load Saul Hub Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
+
+local player = game:GetService("Players").LocalPlayer
+
+-- CREATE MAIN WINDOW
+local windowTitle = "Slap Battles Hub"
+local currentPlaceId = game.PlaceId
+
+if currentPlaceId == 11520107397 or currentPlaceId == 6403373529 or currentPlaceId == 9015014224 then
+    windowTitle = "Slap Battles | Main"
+elseif currentPlaceId == 9431156611 then
+    windowTitle = "Slap Battles | Slap Royale"
+elseif currentPlaceId == 11828384869 then
+    windowTitle = "Slap Battles | Elude Maze"
+elseif currentPlaceId == 9020359053 or currentPlaceId == 9412268818 then
+    windowTitle = "Slap Battles | Testing Server"
+else
+    windowTitle = "Slap Battles | DISCONTINUED"
+end
+
+local Window = Library:Window({
+    Title = windowTitle,
+    Desc = "Message Guy that exists#1915 if you have issues",
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.RightControl,
+        Size = UDim2.new(0, 500, 0, 400)
+    },
+    CloseUIButton = {
+        Enabled = true,
+        Text = "HIDE/SHOW"
+    }
+})
+
+-- Глобальные переменные
+local AntiRecord = false
+local SlapAura = false
+local GetAllItems = false
+local Walkspeed = 20
+local KeepWalkspeed = false
+local Jumppower = 50
+local KeepJumppower = false
+
+-- Анти-байпас функции для Slap Royale
+if currentPlaceId == 9431156611 then
+    local bypass
+    bypass = hookmetamethod(game, "__namecall", function(method, ...) 
+        if getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.Events.Ban then
+            return
+        elseif getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.Events.AdminGUI then
+            return
+        elseif getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.Events.WS then
+            return
+        elseif getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.Events.WS2 then
+            return
+        end
+        return bypass(method, ...)
+    end)
+
+    -- Создаем анти-лавовые зоны
+    local AntiLava = Instance.new("Part", workspace)
+    AntiLava.Name = "AntiLava"
+    AntiLava.Position = Vector3.new(-238, -43, 401)
+    AntiLava.Size = Vector3.new(150,30,150)
+    AntiLava.Anchored = true
+    AntiLava.Transparency = 1
+    AntiLava.CanCollide = false
+
+    local AntiAcid = Instance.new("Part", workspace)
+    AntiAcid.Position = Vector3.new(-70, -20, -725)
+    AntiAcid.Name = "AntiAcid"
+    AntiAcid.Size = Vector3.new(155, 35, 144)
+    AntiAcid.Anchored = true
+    AntiAcid.Transparency = 1
+    AntiAcid.CanCollide = false
+end
+
+-- Создаем безопасные зоны для Main игры
+if currentPlaceId == 11520107397 or currentPlaceId == 6403373529 or currentPlaceId == 9015014224 then
+    local bypass
+    bypass = hookmetamethod(game, "__namecall", function(method, ...) 
+        if getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.Ban then
+            return
+        elseif getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.AdminGUI then
+            return
+        elseif getnamecallmethod() == "FireServer" and method == game.ReplicatedStorage.WalkSpeedChanged then
+            return
+        end
+        return bypass(method, ...)
+    end)
+    
+    if workspace:FindFirstChild("Spot") == nil then
+        local SafeSpot = Instance.new("Part", workspace)
+        SafeSpot.Position = Vector3.new(math.random(-25000,-2500),500,math.random(-25000,-2500))
+        SafeSpot.Name = "Spot"
+        SafeSpot.Size = Vector3.new(500,50,500)
+        SafeSpot.Anchored = true
+        SafeSpot.Transparency = .5
+    end
+    
+    if workspace:FindFirstChild("TAntiVoid") == nil then
+        local TournamentAntiVoid = Instance.new("Part", workspace)
+        TournamentAntiVoid.Name = "TAntiVoid"
+        TournamentAntiVoid.Size = Vector3.new(2048, 15, 2048)
+        TournamentAntiVoid.Position = Vector3.new(3420, 70, 3)
+        TournamentAntiVoid.CanCollide = false
+        TournamentAntiVoid.Transparency = 1
+        TournamentAntiVoid.Anchored = true
+    end
+end
+
+-- ============ HOME TAB ============
+local HomeTab = Window:Tab({
+    Title = "Home",
+    Icon = "home"
+})
+
+HomeTab:Button({
+    Title = "Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/ionlyusegithubformcmods/1-Line-Scripts/main/Infinite%20Yield%20but%20with%20secure%20dex'))()
+        Window:Notify({
+            Title = "Infinite Yield",
+            Desc = "Loaded successfully",
+            Time = 2
+        })
+    end
+})
+
+HomeTab:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+    end
+})
+
+HomeTab:Button({
+    Title = "Destroy GUI",
+    Callback = function()
+        Library:CloseUI()
+    end
+})
+
+HomeTab:Label({
+    Title = "Support",
+    Desc = "Message Guy that exists#1915 if you have issues"
+})
+
+-- ============ COMBAT TAB ============
+local CombatTab = Window:Tab({
+    Title = "Combat",
+    Icon = "sword"
+})
+
+-- Slap Aura для всех режимов
+CombatTab:Toggle({
+    Title = "Slap Aura",
+    Value = false,
+    Callback = function(Value)
+        SlapAura = Value
+        if currentPlaceId == 9431156611 then
+            -- Slap Royale
+            while SlapAura do
+                for i,v in pairs(game.Players:GetChildren()) do
+                    if v ~= game.Players.LocalPlayer and v.Character then
+                        if v.Character:FindFirstChild("Dead") == nil and v.Character:FindFirstChild("HumanoidRootPart") then
+                            local Magnitude = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                            if 25 >= Magnitude then
+                                game.ReplicatedStorage.Events.Slap:FireServer(v.Character:WaitForChild("HumanoidRootPart"))
+                            end
+                        end
+                    end
+                end
+                task.wait()
+            end
+        else
+            -- Другие режимы
+            while SlapAura do
+                for i,v in pairs(game.Players:GetChildren()) do
+                    if v ~= game.Players.LocalPlayer and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and v.Character then
+                        if v.Character:FindFirstChild("entered") and v.Character:FindFirstChild("HumanoidRootPart") then
+                            local Magnitude = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                            if 25 >= Magnitude then
+                                if currentPlaceId == 11520107397 then
+                                    game.ReplicatedStorage.KSHit:FireServer(v.Character:WaitForChild("HumanoidRootPart"))
+                                else
+                                    game.ReplicatedStorage.Slap:FireServer(v.Character:WaitForChild("HumanoidRootPart"))
+                                end
+                            end
+                        end
+                    end
+                end
+                task.wait()
+            end
+        end
+    end
+})
+
+-- Функции для Slap Royale
+if currentPlaceId == 9431156611 then
+    CombatTab:Toggle({
+        Title = "Get All Items",
+        Desc = "Use after bus spawns",
+        Value = false,
+        Callback = function(Value)
+            GetAllItems = Value
+            if game.Players.LocalPlayer.Character:WaitForChild("inMatch").Value == true then
+                while GetAllItems do
+                    for i, v in ipairs(game.Workspace:GetChildren()) do
+                        if v.ClassName == "Tool" then
+                            game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+                        end
+                    end
+                    repeat task.wait() until game.Workspace:FindFirstChildWhichIsA("Tool") == nil
+                    game.Players.LocalPlayer.Character.Humanoid:UnequipTools()
+                    task.wait()
+                end
+            elseif GetAllItems == true then
+                Window:Notify({
+                    Title = "Error",
+                    Desc = "Match hasn't started yet.",
+                    Time = 3
+                })
+            end
+        end
+    })
+    
+    CombatTab:Button({
+        Title = "Bomb Bus",
+        Desc = "Use in the lobby",
+        Callback = function()
+            repeat task.wait()
+            until game.Players.LocalPlayer.Backpack:FindFirstChild("Bomb")
+            for i, v in ipairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                if v.Name == "Bomb" then
+                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(v)
+                    v:Activate()
+                end
+            end
+        end
+    })
+    
+    CombatTab:Button({
+        Title = "Leave Bus Early",
+        Callback = function()
+            game:GetService("ReplicatedStorage").Events.BusJumping:FireServer()
+            repeat task.wait()
+            until game.Players.LocalPlayer.PlayerGui:FindFirstChild("JumpPrompt")
+            game.Players.LocalPlayer.PlayerGui.JumpPrompt:Destroy()
+        end
+    })
+end
+
+-- ============ ANTIS TAB ============
+local AntisTab = Window:Tab({
+    Title = "Antis",
+    Icon = "shield"
+})
+
+-- Anti Record для всех режимов
+AntisTab:Toggle({
+    Title = "Anti Record",
+    Desc = "Detects chat messages",
+    Value = false,
+    Callback = function(Value)
+        AntiRecord = Value
+        if Value then
+            Window:Notify({
+                Title = "Anti Record",
+                Desc = "Recording detection enabled",
+                Time = 2
+            })
+        end
+    end
+})
+
+-- Anti Acid/Lava для Slap Royale
+if currentPlaceId == 9431156611 then
+    AntisTab:Toggle({
+        Title = "Anti Acid",
+        Value = false,
+        Callback = function(Value)
+            if workspace:FindFirstChild("AntiAcid") then
+                workspace.AntiAcid.CanCollide = Value
+            end
+        end
+    })
+    
+    AntisTab:Toggle({
+        Title = "Anti Lava",
+        Value = false,
+        Callback = function(Value)
+            if workspace:FindFirstChild("AntiLava") then
+                workspace.AntiLava.CanCollide = Value
+            end
+        end
+    })
+end
+
+-- ============ MISC TAB ============
+local MiscTab = Window:Tab({
+    Title = "Misc",
+    Icon = "settings"
+})
+
+-- Код лаборатории для Slap Royale
+if currentPlaceId == 9431156611 then
+    MiscTab:Button({
+        Title = "Get Lab Code",
+        Callback = function()
+            if game.Workspace.Map.CodeBrick.SurfaceGui:FindFirstChild("IMGTemplate") then
+                game.Workspace.Map.CodeBrick.SurfaceGui.IMGTemplate.Name = "1st"
+                game.Workspace.Map.CodeBrick.SurfaceGui.IMGTemplate.Name = "2nd"
+                game.Workspace.Map.CodeBrick.SurfaceGui.IMGTemplate.Name = "3rd"
+                game.Workspace.Map.CodeBrick.SurfaceGui.IMGTemplate.Name = "4th"
+            end
+            
+            local first, second, third, fourth = "", "", "", ""
+            
+            for i,v in pairs(game.Workspace.Map.CodeBrick.SurfaceGui:GetChildren()) do
+                if v.Name == "1st" then
+                    if v.Image == "http://www.roblox.com/asset/?id=9648769161" then
+                        first = "4"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648765536" then
+                        first = "2"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648762863" then
+                        first = "3"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648759883" then
+                        first = "9"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648755440" then
+                        first = "8"
+                    end
+                elseif v.Name == "2nd" then
+                    if v.Image == "http://www.roblox.com/asset/?id=9648769161" then
+                        second = "4"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648765536" then
+                        second = "2"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648762863" then
+                        second = "3"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648759883" then
+                        second = "9"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648755440" then
+                        second = "8"
+                    end
+                elseif v.Name == "3rd" then
+                    if v.Image == "http://www.roblox.com/asset/?id=9648769161" then
+                        third = "4"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648765536" then
+                        third = "2"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648762863" then
+                        third = "3"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648759883" then
+                        third = "9"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648755440" then
+                        third = "8"
+                    end
+                elseif v.Name == "4th" then
+                    if v.Image == "http://www.roblox.com/asset/?id=9648769161" then
+                        fourth = "4"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648765536" then
+                        fourth = "2"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648762863" then
+                        fourth = "3"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648759883" then
+                        fourth = "9"
+                    elseif v.Image == "http://www.roblox.com/asset/?id=9648755440" then
+                        fourth = "8"
+                    end
+                end
+            end
+            
+            local Code = first..second..third..fourth
+            Window:Notify({
+                Title = "Lab Code: "..Code,
+                Desc = "Code copied to clipboard",
+                Time = 5
+            })
+            setclipboard(Code)
+        end
+    })
+end
+
+-- Телепорты для Main игры
+if currentPlaceId == 11520107397 or currentPlaceId == 6403373529 or currentPlaceId == 9015014224 then
+    MiscTab:Button({
+        Title = "TP to Safe Spot",
+        Callback = function()
+            if workspace:FindFirstChild("Spot") then
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.Spot.CFrame * CFrame.new(0,28,0)
+            end
+        end
+    })
+    
+    MiscTab:Button({
+        Title = "TP to Arena",
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, -5, 0)
+        end
+    })
+    
+    MiscTab:Button({
+        Title = "TP to Lobby",
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-800,328,-2.5)
+        end
+    })
+end
+
+-- ============ PLAYER TAB ============
+local PlayerTab = Window:Tab({
+    Title = "Player",
+    Icon = "user"
+})
+
+PlayerTab:Slider({
+    Title = "Walkspeed",
+    Min = 16,
+    Max = 200,
+    Rounding = 0,
+    Value = 16,
+    Callback = function(Value)
+        Walkspeed = Value
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Keep Walkspeed",
+    Value = false,
+    Callback = function(Value)
+        KeepWalkspeed = Value
+        while KeepWalkspeed do
+            if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") ~= nil and game.Players.LocalPlayer.Character.Humanoid.WalkSpeed ~= Walkspeed then
+                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Walkspeed
+            end
+            task.wait(0.1)
+        end
+    end
+})
+
+PlayerTab:Slider({
+    Title = "Jumppower",
+    Min = 50,
+    Max = 200,
+    Rounding = 0,
+    Value = 50,
+    Callback = function(Value)
+        Jumppower = Value
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+        end
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "Keep Jumppower",
+    Value = false,
+    Callback = function(Value)
+        KeepJumppower = Value
+        while KeepJumppower do
+            if game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") ~= nil and game.Players.LocalPlayer.Character.Humanoid.JumpPower ~= Jumppower then
+                game.Players.LocalPlayer.Character.Humanoid.JumpPower = Jumppower
+            end
+            task.wait(0.1)
+        end
+    end
+})
+
+-- ============ BADGES TAB (только для Main игры) ============
+if currentPlaceId == 11520107397 or currentPlaceId == 6403373529 or currentPlaceId == 9015014224 or currentPlaceId == 11828384869 then
+    local BadgesTab = Window:Tab({
+        Title = "Badges",
+        Icon = "trophy"
+    })
+    
+    BadgesTab:Button({
+        Title = "Get Elude",
+        Callback = function()
+            local teleportFunc = queueonteleport or queue_on_teleport
+            if teleportFunc then
+                teleportFunc([[
+                    if not game:IsLoaded() then
+                        game.Loaded:Wait()
+                    end
+                    repeat wait() until game.Players.LocalPlayer
+                    game:GetService("RunService").RenderStepped:Connect(function()
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-502.336, 14.228, -179.597)
+                    end)
+                    game:GetService("TeleportService"):Teleport(6403373529)
+                ]])
+            end
+            game:GetService("TeleportService"):Teleport(11828384869)
+            Window:Notify({
+                Title = "Teleporting to Elude Maze",
+                Desc = "Good luck!",
+                Time = 3
+            })
+        end
+    })
+    
+    BadgesTab:Button({
+        Title = "Get Chain (1k+ Slaps)",
+        Callback = function()
+            if game.Players.LocalPlayer.leaderstats and game.Players.LocalPlayer.leaderstats.Slaps.Value >= 1000 then
+                game:GetService("TeleportService"):Teleport(9431156611)
+                Window:Notify({
+                    Title = "Teleporting to Slap Royale",
+                    Desc = "To get Chain badge",
+                    Time = 3
+                })
+            else
+                Window:Notify({
+                    Title = "Not Enough Slaps",
+                    Desc = "You need 1000+ slaps for Chain",
+                    Time = 3
+                })
+            end
+        end
+    })
+end
+
+-- ============ CREDITS TAB ============
+local CreditsTab = Window:Tab({
+    Title = "Credits",
+    Icon = "heart"
+})
+
+CreditsTab:Label({
+    Title = "Slap Battles Hub",
+    Desc = "Message Guy that exists#1915 if you have issues"
+})
+
+CreditsTab:Button({
+    Title = "Copy Discord",
+    Callback = function()
+        setclipboard("Guy that exists#1915")
+        Window:Notify({
+            Title = "Copied",
+            Desc = "Discord username copied",
+            Time = 2
+        })
+    end
+})
+
+-- Функция для Anti Record (работает во всех режимах)
+local function setupAntiRecord()
+    for i,p in pairs(game.Players:GetChildren()) do
+        if p ~= game.Players.LocalPlayer then
+            p.Chatted:Connect(function(message)
+                local Words = message:split(" ")
+                if AntiRecord == true then
+                    for i, v in pairs(Words) do
+                        if v:lower():match("recording") or v:lower():match(" rec") or v:lower():match("record") or v:lower():match("discor") or v:lower():match(" disco") or v:lower():match(" disc") or v:lower():match("ticket") or v:lower():match("tickets") or v:lower():match(" ds") or v:lower():match(" dc") or v:lower():match("dizzy") or v:lower():match("dizzycord") or v:lower():match(" clip") or v:lower():match("proof") or v:lower():match("evidence") then
+                            Window:Notify({
+                                Title = "Anti Record Alert",
+                                Desc = "Recording detected from "..p.Name,
+                                Time = 5
+                            })
+                        end
+                    end
+                end
+            end)
+        end
+    end
+    
+    game.Players.PlayerAdded:Connect(function(Player)
+        Player.Chatted:Connect(function(message)
+            local Words = message:split(" ")
+            if AntiRecord == true then
+                for i, v in pairs(Words) do
+                    if v:lower():match("recording") or v:lower():match(" rec") or v:lower():match("record") or v:lower():match("discor") or v:lower():match(" disco") or v:lower():match(" disc") or v:lower():match("ticket") or v:lower():match("tickets") or v:lower():match(" ds") or v:lower():match(" dc") or v:lower():match("dizzy") or v:lower():match("dizzycord") or v:lower():match(" clip") or v:lower():match("proof") or v:lower():match("evidence") then
+                        Window:Notify({
+                            Title = "Anti Record Alert",
+                            Desc = "Recording detected from new player: "..Player.Name,
+                            Time = 5
+                        })
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+-- Авто-сохранение скорости и прыжка
+game:GetService("RunService").Heartbeat:Connect(function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if KeepWalkspeed and char.Humanoid.WalkSpeed ~= Walkspeed then
+            char.Humanoid.WalkSpeed = Walkspeed
+        end
+        if KeepJumppower and char.Humanoid.JumpPower ~= Jumppower then
+            char.Humanoid.JumpPower = Jumppower
+        end
+    end
+end)
+
+-- Запускаем Anti Record систему
+setupAntiRecord()
+
+-- Уведомление о загрузке
+Window:Notify({
+    Title = "Slap Battles Hub Loaded",
+    Desc = "Game Mode: "..(currentPlaceId == 9431156611 and "Slap Royale" or currentPlaceId == 11520107397 and "Killstreak Only" or currentPlaceId == 11828384869 and "Elude Maze" or currentPlaceId == 9020359053 and "Testing Server" or "Main Game").."\nEnjoy!",
+    Time = 5
+})
+
+print("Slap Battles Hub loaded successfully!")
