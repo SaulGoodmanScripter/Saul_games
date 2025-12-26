@@ -42,8 +42,8 @@ localPlayer.CharacterAdded:Connect(function(character)
     playerCharacter = character
 end)
 
+-- Переменные
 local AutoRecoverDroppedPartsCoroutine
-local connectionBombReload
 local reloadBombCoroutine
 local antiExplosionConnection
 local poisonAuraCoroutine
@@ -52,16 +52,7 @@ local poisonCoroutines = {}
 local strengthConnection
 local autoStruggleCoroutine
 local autoDefendCoroutine
-local auraCoroutine
-local gravityCoroutine
-local kickCoroutine
-local kickGrabCoroutine
-local hellSendGrabCoroutine
 local anchoredParts = {}
-local anchoredConnections = {}
-local compiledGroups = {}
-local compileConnections = {}
-local compileCoroutine
 local fireAllCoroutine
 local connections = {}
 local renderSteppedConnections = {}
@@ -85,7 +76,6 @@ local lightbitcon2
 local lightorbitcon
 local bodyPositions = {}
 local alignOrientations = {}
-local skolko = "" 
 local decoyOffset = 15
 local stopDistance = 5
 local circleRadius = 10
@@ -113,6 +103,7 @@ _G.MaxMissiles = 9
 _G.BlobmanDelay = 0.005
 _G.strength = 400
 
+-- Функции
 local function isDescendantOf(target, other)
     local currentParent = target.Parent
     while currentParent do
@@ -422,13 +413,8 @@ local function anchorGrab()
             for _, player in pairs(Players:GetChildren()) do
                 if isDescendantOf(primaryPart, player.Character) then return end
             end
-            local t = true
-            for _, v in pairs(primaryPart:GetDescendants()) do
-                if table.find(anchoredParts, v) then
-                    t = false
-                end
-            end
-            if t and not table.find(anchoredParts, primaryPart) then
+            
+            if not table.find(anchoredParts, primaryPart) then
                 local target = primaryPart
                 if primaryPart.Parent:IsA("Model") and primaryPart.Parent ~= workspace then
                     target = primaryPart.Parent
@@ -509,103 +495,7 @@ local function cleanupAnchoredParts()
             end
         end
     end
-
-    cleanupConnections(anchoredConnections)
     anchoredParts = {}
-end
-
-local function updateBodyMovers(primaryPart)
-    for _, group in ipairs(compiledGroups) do
-        if group.primaryPart and group.primaryPart == primaryPart then
-            for _, data in ipairs(group.group) do
-                local bodyPosition = data.part:FindFirstChild("BodyPosition")
-                local bodyGyro = data.part:FindFirstChild("BodyGyro")
-                if bodyPosition then
-                    bodyPosition.Position = (primaryPart.CFrame * data.offset).Position
-                end
-                if bodyGyro then
-                    bodyGyro.CFrame = primaryPart.CFrame * data.offset
-                end
-            end
-        end
-    end
-end
-
-local function compileGroup()
-    if #anchoredParts == 0 then 
-        Notify("Error", "No anchored parts found", 5)
-        return
-    end
-
-    Notify("Success", "Compiled "..#anchoredParts.." Toys together", 5)
-
-    local primaryPart = anchoredParts[1]
-    if not primaryPart then return end
-
-    local highlight = primaryPart:FindFirstChild("Highlight") or primaryPart.Parent:FindFirstChild("Highlight")
-    if not highlight then
-        highlight = createHighlight(primaryPart.Parent:IsA("Model") and primaryPart.Parent or primaryPart)
-    end
-    highlight.OutlineColor = Color3.new(0, 1, 0) 
-
-    local group = {}
-    for _, part in ipairs(anchoredParts) do
-        if part ~= primaryPart then
-            local offset = primaryPart.CFrame:toObjectSpace(part.CFrame)
-            table.insert(group, {part = part, offset = offset})
-        end
-    end
-    table.insert(compiledGroups, {primaryPart = primaryPart, group = group})
-    
-    local connection = primaryPart:GetPropertyChangedSignal("CFrame"):Connect(function()
-        updateBodyMovers(primaryPart)
-    end)
-    table.insert(compileConnections, connection)
-
-    local renderSteppedConnection = RunService.Heartbeat:Connect(function()
-        updateBodyMovers(primaryPart)
-    end)
-    table.insert(renderSteppedConnections, renderSteppedConnection)
-end
-
-local function cleanupCompiledGroups()
-    for _, groupData in ipairs(compiledGroups) do
-        for _, data in ipairs(groupData.group) do
-            if data.part then
-                if data.part:FindFirstChild("BodyPosition") then
-                    data.part.BodyPosition:Destroy()
-                end
-                if data.part:FindFirstChild("BodyGyro") then
-                    data.part.BodyGyro:Destroy()
-                end
-            end
-        end
-        if groupData.primaryPart and groupData.primaryPart.Parent then
-            local highlight = groupData.primaryPart:FindFirstChild("Highlight") or groupData.primaryPart.Parent:FindFirstChild("Highlight")
-            if highlight then
-                highlight:Destroy()
-            end
-        end
-    end
-    
-    cleanupConnections(compileConnections)
-    cleanupConnections(renderSteppedConnections)
-    compiledGroups = {}
-end
-
-local function unanchorPrimaryPart()
-    local primaryPart = anchoredParts[1]
-    if not primaryPart then return end
-    if primaryPart:FindFirstChild("BodyPosition") then
-        primaryPart.BodyPosition:Destroy()
-    end
-    if primaryPart:FindFirstChild("BodyGyro") then
-        primaryPart.BodyGyro:Destroy()
-    end
-    local highlight = primaryPart.Parent:FindFirstChild("Highlight") or primaryPart:FindFirstChild("Highlight")
-    if highlight then
-        highlight:Destroy()
-    end
 end
 
 local function recoverParts()
@@ -686,7 +576,7 @@ local function reloadMissile(bool)
 
         if not reloadBombCoroutine then
             reloadBombCoroutine = coroutine.create(function()
-                connectionBombReload = toysFolder.ChildAdded:Connect(function(child)
+                local connectionBombReload = toysFolder.ChildAdded:Connect(function(child)
                     if child.Name == _G.ToyToLoad and child:WaitForChild("ThisToysNumber", 1) then
                         if child.ThisToysNumber.Value == (toysFolder.ToyNumber.Value - 1) then
                             local connection2
@@ -753,9 +643,6 @@ local function reloadMissile(bool)
             coroutine.close(reloadBombCoroutine)
             reloadBombCoroutine = nil
         end
-        if connectionBombReload then
-            connectionBombReload:Disconnect()
-        end
     end
 end
 
@@ -815,10 +702,7 @@ local ObjectGrabTab = Window:Tab({Title = "Object Grab", Icon = "package"})
 local DefanseTab = Window:Tab({Title = "Anti Grab", Icon = "shield"})
 local BlobmanTab = Window:Tab({Title = "Blob Man", Icon = "user-plus"})
 local FunTab = Window:Tab({Title = "Fun / Troll", Icon = "smile"})
-local ScriptTab = Window:Tab({Title = "Script", Icon = "code"})
-local AuraTab = Window:Tab({Title = "Auras", Icon = "sun"})
 local ExplosionTab = Window:Tab({Title = "Explosions", Icon = "bomb"})
-local KeybindsTab = Window:Tab({Title = "Keybinds", Icon = "keyboard"})
 
 -- Home Tab
 homeTab:Section({Title = "Welcome"})
@@ -829,11 +713,6 @@ homeTab:Label({
 
 -- Combat Tab
 GrabTab:Section({Title = "Strength Settings"})
-GrabTab:Label({
-    Title = "Strength Power",
-    Desc = "Adjust the throwing force"
-})
-
 GrabTab:Slider({
     Title = "Strength Power",
     Desc = "Set throwing strength",
@@ -845,11 +724,13 @@ GrabTab:Slider({
     end
 })
 
+local strengthEnabled = false
 GrabTab:Toggle({
     Title = "Enable Strength",
     Desc = "Enable enhanced throwing",
     Value = false,
     Callback = function(enabled)
+        strengthEnabled = enabled
         if enabled then
             strengthConnection = workspace.ChildAdded:Connect(function(model)
                 if model.Name == "GrabParts" then
@@ -877,18 +758,41 @@ GrabTab:Toggle({
 })
 
 GrabTab:Section({Title = "Grab Effects"})
-GrabTab:Label({
-    Title = "Grab Effects",
-    Desc = "These effects apply when you grab someone"
-})
 
+local poisonGrabEnabled = false
 GrabTab:Toggle({
     Title = "Poison Grab",
     Desc = "Apply poison effect when grabbing",
     Value = false,
     Callback = function(enabled)
+        poisonGrabEnabled = enabled
         if enabled then
-            poisonGrabCoroutine = coroutine.create(function() grabHandler("poison") end)
+            poisonGrabCoroutine = coroutine.create(function()
+                while poisonGrabEnabled do
+                    pcall(function()
+                        local child = workspace:FindFirstChild("GrabParts")
+                        if child and child.Name == "GrabParts" then
+                            local grabPart = child:FindFirstChild("GrabPart")
+                            local grabbedPart = grabPart:FindFirstChild("WeldConstraint").Part1
+                            local head = grabbedPart.Parent:FindFirstChild("Head")
+                            if head then
+                                while workspace:FindFirstChild("GrabParts") do
+                                    for _, part in pairs(poisonHurtParts) do
+                                        part.Size = Vector3.new(2, 2, 2)
+                                        part.Transparency = 1
+                                        part.Position = head.Position
+                                    end
+                                    task.wait()
+                                    for _, part in pairs(poisonHurtParts) do
+                                        part.Position = Vector3.new(0, -200, 0)
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
             coroutine.resume(poisonGrabCoroutine)
         else
             if poisonGrabCoroutine then
@@ -902,13 +806,40 @@ GrabTab:Toggle({
     end
 })
 
+local radioactiveGrabEnabled = false
 GrabTab:Toggle({
     Title = "Radioactive Grab",
     Desc = "Apply radioactive effect when grabbing",
     Value = false,
     Callback = function(enabled)
+        radioactiveGrabEnabled = enabled
         if enabled then
-            ufoGrabCoroutine = coroutine.create(function() grabHandler("radioactive") end)
+            ufoGrabCoroutine = coroutine.create(function()
+                while radioactiveGrabEnabled do
+                    pcall(function()
+                        local child = workspace:FindFirstChild("GrabParts")
+                        if child and child.Name == "GrabParts" then
+                            local grabPart = child:FindFirstChild("GrabPart")
+                            local grabbedPart = grabPart:FindFirstChild("WeldConstraint").Part1
+                            local head = grabbedPart.Parent:FindFirstChild("Head")
+                            if head then
+                                while workspace:FindFirstChild("GrabParts") do
+                                    for _, part in pairs(paintPlayerParts) do
+                                        part.Size = Vector3.new(2, 2, 2)
+                                        part.Transparency = 1
+                                        part.Position = head.Position
+                                    end
+                                    task.wait()
+                                    for _, part in pairs(paintPlayerParts) do
+                                        part.Position = Vector3.new(0, -200, 0)
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
             coroutine.resume(ufoGrabCoroutine)
         else
             if ufoGrabCoroutine then
@@ -922,13 +853,30 @@ GrabTab:Toggle({
     end
 })
 
+local fireGrabEnabled = false
 GrabTab:Toggle({
     Title = "Fire Grab",
     Desc = "Apply fire effect when grabbing",
     Value = false,
     Callback = function(enabled)
+        fireGrabEnabled = enabled
         if enabled then
-            fireGrabCoroutine = coroutine.create(fireGrab)
+            fireGrabCoroutine = coroutine.create(function()
+                while fireGrabEnabled do
+                    pcall(function()
+                        local child = workspace:FindFirstChild("GrabParts")
+                        if child and child.Name == "GrabParts" then
+                            local grabPart = child:FindFirstChild("GrabPart")
+                            local grabbedPart = grabPart:FindFirstChild("WeldConstraint").Part1
+                            local head = grabbedPart.Parent:FindFirstChild("Head")
+                            if head then
+                                arson(head)
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
             coroutine.resume(fireGrabCoroutine)
         else
             if fireGrabCoroutine then
@@ -939,13 +887,42 @@ GrabTab:Toggle({
     end
 })
 
+local noclipGrabEnabled = false
 GrabTab:Toggle({
     Title = "Noclip Grab",
     Desc = "Make grabbed player noclip",
     Value = false,
     Callback = function(enabled)
+        noclipGrabEnabled = enabled
         if enabled then
-            noclipGrabCoroutine = coroutine.create(noclipGrab)
+            noclipGrabCoroutine = coroutine.create(function()
+                while noclipGrabEnabled do
+                    pcall(function()
+                        local child = workspace:FindFirstChild("GrabParts")
+                        if child and child.Name == "GrabParts" then
+                            local grabPart = child:FindFirstChild("GrabPart")
+                            local grabbedPart = grabPart:FindFirstChild("WeldConstraint").Part1
+                            local character = grabbedPart.Parent
+                            if character.HumanoidRootPart then
+                                while workspace:FindFirstChild("GrabParts") do
+                                    for _, part in pairs(character:GetChildren()) do
+                                        if part:IsA("BasePart") then
+                                            part.CanCollide = false
+                                        end
+                                    end
+                                    task.wait()
+                                end
+                                for _, part in pairs(character:GetChildren()) do
+                                    if part:IsA("BasePart") then
+                                        part.CanCollide = true
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    task.wait()
+                end
+            end)
             coroutine.resume(noclipGrabCoroutine)
         else
             if noclipGrabCoroutine then
@@ -956,11 +933,13 @@ GrabTab:Toggle({
     end
 })
 
+local kickGrabEnabled = false
 GrabTab:Toggle({
     Title = "Kick Grab",
     Desc = "Enable kick grab effects",
     Value = false,
     Callback = function(enabled)
+        kickGrabEnabled = enabled
         if enabled then
             kickGrab()
         else
@@ -983,14 +962,21 @@ GrabTab:Toggle({
     end
 })
 
+local kickGrabAnchorEnabled = false
 GrabTab:Toggle({
     Title = "Kick Grab Anchor",
     Desc = "Anchor kick grabbed players",
     Value = false,
     Callback = function(enabled)
+        kickGrabAnchorEnabled = enabled
         if enabled then
             if not antiKickCoroutine or coroutine.status(antiKickCoroutine) == "dead" then
-                antiKickCoroutine = coroutine.create(anchorKickGrab)
+                antiKickCoroutine = coroutine.create(function()
+                    while kickGrabAnchorEnabled do
+                        pcall(anchorKickGrab)
+                        task.wait()
+                    end
+                end)
                 coroutine.resume(antiKickCoroutine)
             end
         else
@@ -1002,14 +988,20 @@ GrabTab:Toggle({
     end
 })
 
-GrabTab:Section({Title = "Fire All"})
+local fireAllEnabled = false
 GrabTab:Toggle({
     Title = "Fire All",
     Desc = "Fire effect on all players",
     Value = false,
     Callback = function(enabled)
+        fireAllEnabled = enabled
         if enabled then
-            fireAllCoroutine = coroutine.create(fireAll)
+            fireAllCoroutine = coroutine.create(function()
+                while fireAllEnabled do
+                    pcall(fireAll)
+                    task.wait()
+                end
+            end)
             coroutine.resume(fireAllCoroutine)
         else
             if fireAllCoroutine then
@@ -1022,21 +1014,24 @@ GrabTab:Toggle({
 
 -- Local Player Tab
 PlayerTab:Section({Title = "Movement"})
+
+local crouchSpeedEnabled = false
 PlayerTab:Toggle({
     Title = "Crouch Speed",
     Desc = "Increase speed while crouching",
     Value = false,
     Callback = function(enabled)
+        crouchSpeedEnabled = enabled
         if enabled then
             crouchSpeedCoroutine = coroutine.create(function()
-                while true do
+                while crouchSpeedEnabled do
                     pcall(function()
                         if not playerCharacter.Humanoid then return end
                         if playerCharacter.Humanoid.WalkSpeed == 5 then
                             playerCharacter.Humanoid.WalkSpeed = crouchWalkSpeed
                         end
                     end)
-                    wait()
+                    task.wait()
                 end
             end)
             coroutine.resume(crouchSpeedCoroutine)
@@ -1061,21 +1056,23 @@ PlayerTab:Slider({
     end
 })
 
+local crouchJumpEnabled = false
 PlayerTab:Toggle({
     Title = "Crouch Jump Power",
     Desc = "Increase jump power while crouching",
     Value = false,
     Callback = function(enabled)
+        crouchJumpEnabled = enabled
         if enabled then
             crouchJumpCoroutine = coroutine.create(function()
-                while true do
+                while crouchJumpEnabled do
                     pcall(function()
                         if not playerCharacter.Humanoid then return end
                         if playerCharacter.Humanoid.JumpPower == 12 then
                             playerCharacter.Humanoid.JumpPower = crouchJumpPower
                         end
                     end)
-                    wait()
+                    task.wait()
                 end
             end)
             coroutine.resume(crouchJumpCoroutine)
@@ -1102,14 +1099,22 @@ PlayerTab:Slider({
 
 -- Object Grab Tab
 ObjectGrabTab:Section({Title = "Anchor Grab"})
+
+local anchorGrabEnabled = false
 ObjectGrabTab:Toggle({
     Title = "Anchor Grab",
     Desc = "Anchor objects when grabbed",
     Value = false,
     Callback = function(enabled)
+        anchorGrabEnabled = enabled
         if enabled then
             if not anchorGrabCoroutine or coroutine.status(anchorGrabCoroutine) == "dead" then
-                anchorGrabCoroutine = coroutine.create(anchorGrab)
+                anchorGrabCoroutine = coroutine.create(function()
+                    while anchorGrabEnabled do
+                        pcall(anchorGrab)
+                        task.wait()
+                    end
+                end)
                 coroutine.resume(anchorGrabCoroutine)
             end
         else
@@ -1127,28 +1132,21 @@ ObjectGrabTab:Button({
     Callback = cleanupAnchoredParts
 })
 
-ObjectGrabTab:Button({
-    Title = "Disassemble Parts",
-    Desc = "Disassemble compiled groups",
-    Callback = function()
-        cleanupCompiledGroups()
-        cleanupAnchoredParts()
-
-        if compileCoroutine and coroutine.status(compileCoroutine) ~= "dead" then
-            coroutine.close(compileCoroutine)
-            compileCoroutine = nil
-        end
-    end
-})
-
+local autoRecoverEnabled = false
 ObjectGrabTab:Toggle({
     Title = "Auto Recover Dropped Parts",
     Desc = "Automatically recover dropped parts",
     Value = false,
     Callback = function(enabled)
+        autoRecoverEnabled = enabled
         if enabled then
             if not AutoRecoverDroppedPartsCoroutine or coroutine.status(AutoRecoverDroppedPartsCoroutine) == "dead" then
-                AutoRecoverDroppedPartsCoroutine = coroutine.create(recoverParts)
+                AutoRecoverDroppedPartsCoroutine = coroutine.create(function()
+                    while autoRecoverEnabled do
+                        pcall(recoverParts)
+                        task.wait(0.02)
+                    end
+                end)
                 coroutine.resume(AutoRecoverDroppedPartsCoroutine)
             end
         else
@@ -1160,25 +1158,16 @@ ObjectGrabTab:Toggle({
     end
 })
 
-ObjectGrabTab:Button({
-    Title = "Unanchor Header Part",
-    Desc = "Remove anchor from primary part",
-    Callback = unanchorPrimaryPart
-})
-
-ObjectGrabTab:Button({
-    Title = "Compile Group",
-    Desc = "Compile anchored parts together",
-    Callback = compileGroup
-})
-
 -- Defense Tab
 DefanseTab:Section({Title = "Anti-Grab"})
+
+local antiGrabEnabled = false
 DefanseTab:Toggle({
     Title = "Anti Grab",
     Desc = "Automatically struggle when grabbed",
     Value = false,
     Callback = function(enabled)
+        antiGrabEnabled = enabled
         if enabled then
             autoStruggleCoroutine = RunService.Heartbeat:Connect(function()
                 local character = localPlayer.Character
@@ -1194,7 +1183,7 @@ DefanseTab:Toggle({
                             end
                         end
                         while localPlayer.IsHeld.Value do
-                            wait()
+                            task.wait()
                         end
                         for _, part in pairs(character:GetChildren()) do
                             if part:IsA("BasePart") then
@@ -1213,11 +1202,13 @@ DefanseTab:Toggle({
     end
 })
 
+local antiKickGrabEnabled = false
 DefanseTab:Toggle({
     Title = "Anti Kick Grab",
     Desc = "Prevent being kick grabbed",
     Value = false,
     Callback = function(enabled)
+        antiKickGrabEnabled = enabled
         if enabled then
             antiKickCoroutine = RunService.Heartbeat:Connect(function()
                 local character = localPlayer.Character
@@ -1226,7 +1217,7 @@ DefanseTab:Toggle({
                     if partOwner and partOwner.Value ~= localPlayer.Name then
                         local args = {[1] = character:WaitForChild("HumanoidRootPart"), [2] = 0}
                         game:GetService("ReplicatedStorage"):WaitForChild("CharacterEvents"):WaitForChild("RagdollRemote"):FireServer(unpack(args))
-                        wait(0.1)
+                        task.wait(0.1)
                         Struggle:FireServer()
                     end
                 end
@@ -1240,11 +1231,13 @@ DefanseTab:Toggle({
     end
 })
 
+local antiExplosionEnabled = false
 DefanseTab:Toggle({
     Title = "Anti Explosion",
     Desc = "Prevent explosion effects",
     Value = false,
     Callback = function(enabled)
+        antiExplosionEnabled = enabled
         if enabled then
             if localPlayer.Character then
                 setupAntiExplosion(localPlayer.Character)
@@ -1265,14 +1258,18 @@ DefanseTab:Toggle({
 })
 
 DefanseTab:Section({Title = "Self Defense"})
+
+local selfDefenseEnabled = false
 DefanseTab:Toggle({
     Title = "Self Defense / Air Suspend",
     Desc = "Suspend attackers in air",
     Value = false,
     Callback = function(enabled)
+        selfDefenseEnabled = enabled
         if enabled then
             autoDefendCoroutine = coroutine.create(function()
-                while wait(0.02) do
+                while selfDefenseEnabled do
+                    task.wait(0.02)
                     local character = localPlayer.Character
                     if character and character:FindFirstChild("Head") then
                         local head = character.Head
@@ -1309,17 +1306,14 @@ DefanseTab:Toggle({
 
 -- Blobman Tab
 BlobmanTab:Section({Title = "Blobman"})
-BlobmanTab:Label({
-    Title = "Blobman Settings",
-    Desc = "Destroy server with blobman"
-})
 
-local blobmanToggle
-blobmanToggle = BlobmanTab:Toggle({
+local blobmanEnabled = false
+local blobmanToggle = BlobmanTab:Toggle({
     Title = "Destroy Server",
     Desc = "Use blobman to grab all players",
     Value = false,
     Callback = function(enabled)
+        blobmanEnabled = enabled
         if enabled then
             blobmanCoroutine = coroutine.create(function()
                 local foundBlobman = false
@@ -1342,18 +1336,16 @@ blobmanToggle = BlobmanTab:Toggle({
                     return
                 end
 
-                while true do
+                while blobmanEnabled do
                     pcall(function()
-                        while wait() do
-                            for i, v in pairs(Players:GetChildren()) do
-                                if blobman and v ~= localPlayer then
-                                    blobGrabPlayer(v, blobman)
-                                    wait(_G.BlobmanDelay)
-                                end
+                        for i, v in pairs(Players:GetChildren()) do
+                            if blobman and v ~= localPlayer and blobmanEnabled then
+                                blobGrabPlayer(v, blobman)
+                                task.wait(_G.BlobmanDelay)
                             end
                         end
                     end)
-                    wait(0.02)
+                    task.wait(0.02)
                 end
             end)
             coroutine.resume(blobmanCoroutine)
@@ -1380,19 +1372,16 @@ BlobmanTab:Slider({
 
 -- Fun Tab
 FunTab:Section({Title = "Troll"})
-FunTab:Label({
-    Title = "Get Coins",
-    Desc = "Set coin amount"
-})
 
-FunTab:Input({
+local coinAmount = ""
+FunTab:Textbox({
     Title = "Number of coins",
     Desc = "Enter amount",
     Value = "",
     Placeholder = "Number",
     ClearText = false,
     Callback = function(Text)
-        skolko = Text 
+        coinAmount = Text 
     end
 })
 
@@ -1400,9 +1389,9 @@ FunTab:Button({
     Title = "Get Coin",
     Desc = "Set coin amount in GUI",
     Callback = function()
-        local coinAmount = tonumber(skolko) or 0 
-        game.Players.LocalPlayer.PlayerGui.MenuGui.TopRight.CoinsFrame.CoinsDisplay.Coins.Text = tostring(coinAmount)
-        Notify("Success", "Set coins to "..coinAmount, 3)
+        local amount = tonumber(coinAmount) or 0 
+        game.Players.LocalPlayer.PlayerGui.MenuGui.TopRight.CoinsFrame.CoinsDisplay.Coins.Text = tostring(amount)
+        Notify("Success", "Set coins to "..amount, 3)
     end
 })
 
@@ -1418,17 +1407,20 @@ FunTab:Slider({
     end
 })
 
-FunTab:Input({
+local circleRadiusValue = "10"
+FunTab:Textbox({
     Title = "Circle Radius",
     Desc = "Radius for surround mode",
     Value = "10",
     Placeholder = "Radius",
     ClearText = false,
     Callback = function(Value)
+        circleRadiusValue = Value
         circleRadius = tonumber(Value) or 10
     end
 })
 
+-- Decoy system
 local decoyConnections = {}
 FunTab:Button({
     Title = "Decoy Follow",
@@ -1531,29 +1523,42 @@ FunTab:Button({
     end
 })
 
--- Explosions Tab
-ExplosionTab:Section({Title = "Missile Settings"})
-ExplosionTab:Label({
-    Title = "Missile Reload",
-    Desc = "Auto reload missiles"
-})
-
-ExplosionTab:Toggle({
-    Title = "Auto Reload Missiles",
-    Desc = "Automatically reload missiles",
+local ragdollAllEnabled = false
+FunTab:Toggle({
+    Title = "Ragdoll All",
+    Desc = "Ragdoll all players",
     Value = false,
     Callback = function(enabled)
-        reloadMissile(enabled)
+        ragdollAllEnabled = enabled
+        if enabled then
+            ragdollAllCoroutine = coroutine.create(function()
+                while ragdollAllEnabled do
+                    pcall(ragdollAll)
+                    task.wait()
+                end
+            end)
+            coroutine.resume(ragdollAllCoroutine)
+        else
+            if ragdollAllCoroutine then
+                coroutine.close(ragdollAllCoroutine)
+                ragdollAllCoroutine = nil
+            end
+        end
     end
 })
 
-ExplosionTab:Input({
+-- Explosion Tab
+ExplosionTab:Section({Title = "Missile Settings"})
+
+local toyName = "BombMissile"
+ExplosionTab:Textbox({
     Title = "Toy to Load",
     Desc = "Enter toy name",
     Value = "BombMissile",
     Placeholder = "Toy Name",
     ClearText = false,
     Callback = function(Text)
+        toyName = Text
         _G.ToyToLoad = Text
     end
 })
@@ -1569,21 +1574,14 @@ ExplosionTab:Slider({
     end
 })
 
--- Ragdoll All
-FunTab:Toggle({
-    Title = "Ragdoll All",
-    Desc = "Ragdoll all players",
+local autoReloadEnabled = false
+ExplosionTab:Toggle({
+    Title = "Auto Reload Missiles",
+    Desc = "Automatically reload missiles",
     Value = false,
     Callback = function(enabled)
-        if enabled then
-            ragdollAllCoroutine = coroutine.create(ragdollAll)
-            coroutine.resume(ragdollAllCoroutine)
-        else
-            if ragdollAllCoroutine then
-                coroutine.close(ragdollAllCoroutine)
-                ragdollAllCoroutine = nil
-            end
-        end
+        autoReloadEnabled = enabled
+        reloadMissile(enabled)
     end
 })
 
