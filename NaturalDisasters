@@ -306,95 +306,13 @@ local MaxDistanceSlider = TeleportTab:Slider({
 
 -- ====== SETTINGS TAB ELEMENTS ======
 SettingsTab:Section({
-    Title = "UI Settings"
-})
-
-local themes = {"Dark", "Amethyst", "Sapphire", "Amber", "Topaz", "Ocean", "Cyberpunk"}
-local themeDropdown = SettingsTab:Dropdown({
-    Title = "Theme",
-    Desc = "Select UI theme",
-    List = themes,
-    Value = "Dark",
-    Callback = function(value)
-        Library:setTheme(value)
-    end
-})
-
-SettingsTab:Keybind({
-    Title = "Toggle Keybind",
-    Desc = "Key to show/hide UI",
-    Key = Enum.KeyCode.RightControl,
-    Callback = function(key, state)
-        -- Already handled by library
-    end
-})
-
--- Create separator using Label with empty text
-SettingsTab:Label({
-    Title = "",
-    Desc = ""
-})
-
-SettingsTab:Section({
-    Title = "Safety Settings"
-})
-
-SettingsTab:Slider({
-    Title = "Fling Limit",
-    Desc = "Velocity limit for anti fling",
-    Min = 50,
-    Max = 100,
-    Rounding = 0,
-    Value = FLING_LIMIT,
-    Callback = function(value)
-        FLING_LIMIT = value
-    end
-})
-
-SettingsTab:Slider({
-    Title = "Fall Offset",
-    Desc = "Y offset for fall detection",
-    Min = 1,
-    Max = 20,
-    Rounding = 0,
-    Value = FALL_OFFSET,
-    Callback = function(value)
-        FALL_OFFSET = value
-    end
-})
-
--- Create separator using Label with empty text
-SettingsTab:Label({
-    Title = "",
-    Desc = ""
-})
-
-SettingsTab:Section({
     Title = "Info"
 })
 
 SettingsTab:Label({
     Title = "Credits",
-    Desc = "Original by zaluli Scriptblox"
+    Desc = "By Saul Hub"
 })
-
-SettingsTab:Button({
-    Title = "Show Credits",
-    Desc = "Display credits notification",
-    Callback = function()
-        Window:Dialog({
-            Title = "Credits",
-            Button1 = {
-                Title = "OK",
-                Color = Color3.fromRGB(0, 188, 0),
-                Callback = function()
-                    print("Credits: zaluli Scriptblox")
-                end
-            }
-        })
-    end
-})
-
 -- ====== NOTIFICATIONS ======
 local userId
 pcall(function()
@@ -451,6 +369,3 @@ task.spawn(function()
     
     SendChatMessage("Halah Nyocot")
 end)
-
-print("AUTO FARM GOD MODE | Anti Admin Fling | By Zaluli_Hrieta")
-print("UI Library: Saul Hub")
