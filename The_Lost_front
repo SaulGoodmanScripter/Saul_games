@@ -1,3 +1,4 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Loader_Ui"))()
 -- Подключение Saul Library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/library/refs/heads/main/The%20main%20code"))()
 
@@ -1062,29 +1063,44 @@ ESPTab:Slider({
     end
 })
 
-local MiscTab = Window:Tab({
-    Title = "Misc",
-    Icon = "settings"
+-- ВКЛАДКА CREDITS
+local Tab8 = Window:Tab({Title = "👤 Credits", Icon = "heart"})
+
+Tab8:Section({Title = "👑 Разработчики"})
+
+Tab8:Label({
+    Title = "👤 Saul Goodman",
+    Desc = "Создатель и главный разработчик\nTelegram: @SaulGoodmanScript"
 })
 
-MiscTab:Section({
-    Title = "Actions"
-})
-
-MiscTab:Button({
-    Title = "Unload Script",
-    Desc = "Remove script from game",
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
     Callback = function()
+        setclipboard("https://t.me/SaulGoodmanScript")
         Window:Notify({
-            Title = "Unloading",
-            Desc = "Goodbye!",
-            Time = 1
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
         })
-        task.wait(0.5)
-        Unload()
     end
 })
 
+Tab8:Label({
+    Title = "🤝 Lori Script",
+    Desc = "Партнер проекта\nTelegram: @loriscript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/loriscript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
 if IsMobile then
     -- Note: Saul Library doesn't have built-in AimButton like Xan UI
     -- You'll need to handle mobile controls separately
