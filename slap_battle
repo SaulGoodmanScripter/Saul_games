@@ -38,7 +38,7 @@ local Window = Library:Window({
     Title = "👏 Slap Battles Script",
     Desc = "Saul Hub - Slap Battles Автофарм",
     Icon = 15315284749,
-    Theme = "Dark",
+    Theme = "Topaz",
     Config = {
         Keybind = Enum.KeyCode.RightControl,
         Size = UDim2.new(0, 500, 0, 350)
@@ -495,33 +495,7 @@ SettingsTab:Toggle({
     end
 })
 
-SettingsTab:Button({
-    Title = "🔄 Обновить GUI",
-    Desc = "Перезагрузить интерфейс",
-    Callback = function()
-        Library:refresh()
-    end
-})
 
-SettingsTab:Button({
-    Title = "🗑️ Удалить GUI",
-    Desc = "Полностью удалить интерфейс",
-    Callback = function()
-        Library:Destroy()
-    end
-})
-
-SettingsTab:Section({Title = "🎨 Theme Settings"})
-
-SettingsTab:Dropdown({
-    Title = "Выберите тему",
-    Desc = "Изменить тему интерфейса",
-    List = {"Dark", "Amethyst", "Sapphire", "Amber", "Topaz", "Ocean", "Solarized", "Emerald", "Midnight", "RoseQuartz", "Cyberpunk", "Desert", "Frost", "Galaxy", "Crimson", "Halloween", "NewYear"},
-    Value = "Dark",
-    Callback = function(value)
-        Library:setTheme(value)
-    end
-})
 
 -- Вкладка Home/Информация
 local HomeTab = Window:Tab({Title = "🏠 Home", Icon = "home"})
