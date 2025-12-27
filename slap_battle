@@ -36,12 +36,12 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulG
 -- Создаем окно
 local Window = Library:Window({
     Title = "👏 Slap Battles Script",
-    Desc = "Giang Hub - Slap Battles Автофарм",
+    Desc = "Saul Hub - Slap Battles Автофарм",
     Icon = 15315284749,
     Theme = "Dark",
     Config = {
         Keybind = Enum.KeyCode.RightControl,
-        Size = UDim2.new(0, 550, 0, 400)
+        
     },
     CloseUIButton = {
         Enabled = true,
@@ -548,33 +548,44 @@ HomeTab:Label({
     Desc = "🟢 Active"
 })
 
--- Вкладка Credits
-local CreditsTab = Window:Tab({Title = "👤 Credits", Icon = "heart"})
+-- ВКЛАДКА CREDITS
+local Tab8 = Window:Tab({Title = "👤 Credits", Icon = "heart"})
 
-CreditsTab:Section({Title = "👑 Developers"})
+Tab8:Section({Title = "👑 Разработчики"})
 
-CreditsTab:Label({
-    Title = "👤 Giangplay",
-    Desc = "Original script creator"
-})
-
-CreditsTab:Label({
+Tab8:Label({
     Title = "👤 Saul Goodman",
-    Desc = "UI Library developer\nTelegram: @SaulGoodmanScript"
+    Desc = "Создатель и главный разработчик\nTelegram: @SaulGoodmanScript"
 })
 
-CreditsTab:Button({
-    Title = "📋 Copy Telegram",
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
     Callback = function()
         setclipboard("https://t.me/SaulGoodmanScript")
         Window:Notify({
-            Title = "📋 Copied",
-            Desc = "Link copied to clipboard",
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
             Time = 3
         })
     end
 })
 
+Tab8:Label({
+    Title = "🤝 Lori Script",
+    Desc = "Партнер проекта\nTelegram: @loriscript"
+})
+
+Tab8:Button({
+    Title = "📋 Копировать Telegram",
+    Callback = function()
+        setclipboard("https://t.me/loriscript")
+        Window:Notify({
+            Title = "📋 Скопировано",
+            Desc = "Ссылка скопирована",
+            Time = 3
+        })
+    end
+})
 -- Уведомление при запуске
 Window:Notify({
     Title = "👏 Slap Battles Script Loaded",
