@@ -669,40 +669,14 @@ local Noclip1 = MiscTab:Toggle({
 
 MiscTab:Section({Title = "Fly Up"})
 
-local Lighting = game:GetService("Lighting")
-
-_G.FlyUpAllTime = false
-_G.FlyUpNightOnly = false
-
-local ToggleAllTime = MiscTab:Toggle({
-    Title = "Fly Up (All Time)",
-    Value = false,
-    Callback = function(v)
-        _G.FlyUpAllTime = v
-        local character = player.Character
-        if not character then return end
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if not hrp or not humanoid then return end
-
-        humanoid.PlatformStand = v
-
-        if v then
-            task.spawn(function()
-                while _G.FlyUpAllTime do
-                    local ray = Ray.new(hrp.Position, Vector3.new(0, -1000, 0))
-                    local part, pos = workspace:FindPartOnRay(ray, hrp.Parent)
-                    local targetY = (part and pos.Y or hrp.Position.Y) + 300
-                    hrp.Velocity = Vector3.new(0, 0, 0)
-                    hrp.CFrame = CFrame.new(hrp.Position.X, targetY, hrp.Position.Z)
-                    task.wait()
-                end
-                humanoid.PlatformStand = false
-            end)
-        end
+MiscTab:Button({
+    Title = "Fly GUI",
+    Desc = "Open flight menu",
+    Callback = function()
+        btnclick()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Fly"))()
     end
 })
-
 -- Auto Chest
 MiscTab:Section({Title = "Auto Chest"})
 
