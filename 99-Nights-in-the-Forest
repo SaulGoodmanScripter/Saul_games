@@ -678,6 +678,14 @@ MiscTab:Button({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Fly"))()
     end
 })
+MiscTab:Button({
+    Title = "Immortality",
+    Desc = "It will make you invisible",
+    Callback = function()
+        btnclick()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/SaulGoodmanScripter/Utilit/refs/heads/main/Fly"))()
+    end
+})
 -- Auto Chest
 MiscTab:Section({Title = "Auto Chest"})
 
